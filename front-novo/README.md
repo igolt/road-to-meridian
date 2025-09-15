@@ -1,13 +1,14 @@
-# Stellar Real Estate - Frontend
+# RealYield - Frontend
 
-Este é o frontend da aplicação Stellar Real Estate, uma plataforma para tokenização de imóveis na rede Stellar.
+Este é o frontend da aplicação RealYield, uma plataforma para tokenização de imóveis na rede Stellar.
 
 ## Funcionalidades
 
-### Tela de Seleção
+### Tela Principal RealYield
+- **Título RealYield** com design moderno e gradientes
+- **Login na carteira digital** (Freighter)
 - Interface para escolher entre **Empresa** e **Investidor**
-- Design moderno e responsivo
-- Preparado para futuras abas específicas
+- Design responsivo e preparado para futuras abas específicas
 
 ### Dashboard Empresa
 - Conectar carteira Freighter
@@ -47,17 +48,17 @@ npm run build
 ```
 src/
 ├── components/
-│   ├── ui/                 # Componentes base (Button, Card, Input, etc.)
-│   ├── UserTypeSelector.tsx    # Tela de seleção de tipo de usuário
-│   ├── EmpresaDashboard.tsx    # Dashboard para empresas
-│   └── InvestidorDashboard.tsx # Dashboard para investidores
+│   ├── ui/                      # Componentes base (Button, Card, Input, etc.)
+│   ├── RealYieldScreen.tsx       # Tela principal com login e seleção
+│   ├── EmpresaDashboard.tsx     # Dashboard para empresas
+│   └── InvestidorDashboard.tsx  # Dashboard para investidores
 ├── services/
-│   └── StellarService.ts       # Serviço para integração com Stellar
+│   └── StellarService.ts        # Serviço para integração com Stellar
 ├── types/
-│   └── index.ts               # Tipos TypeScript
+│   └── index.ts                 # Tipos TypeScript
 ├── lib/
-│   └── utils.ts              # Utilitários
-└── App.tsx                   # Componente principal
+│   └── utils.ts                 # Utilitários
+└── App.tsx                      # Componente principal
 ```
 
 ## Integração com Stellar

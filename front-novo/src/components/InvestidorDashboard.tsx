@@ -76,7 +76,7 @@ export const InvestidorDashboard: React.FC<InvestidorDashboardProps> = ({ onBack
             onClick={onBack}
             className="mb-4"
           >
-            ← Voltar
+            ← Voltar para RealYild
           </Button>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Investidor</h1>
           <p className="text-gray-600 mt-2">Gerencie seus investimentos em tokens de imóveis</p>
