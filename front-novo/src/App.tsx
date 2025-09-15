@@ -1,57 +1,25 @@
 import React, { useState } from 'react';
+import EmpresaDashboard from './components/EmpresaDashboard';
 
-type AppState = 'realyild' | 'empresa' | 'investidor';
+type AppState = 'realyield' | 'empresa' | 'investidor';
 
 function App() {
-  const [currentState, setCurrentState] = useState<AppState>('realyild');
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [currentState, setCurrentState] = useState<AppState>('realyield');
 
-  const handleSelectEmpresa = async () => {
-    setIsAuthenticating(true);
-    // Simular autenticação
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  const handleSelectEmpresa = () => {
     setCurrentState('empresa');
-    setIsAuthenticating(false);
   };
 
-  const handleSelectInvestidor = async () => {
-    setIsAuthenticating(true);
-    // Simular autenticação
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  const handleSelectInvestidor = () => {
     setCurrentState('investidor');
-    setIsAuthenticating(false);
   };
 
-  const handleBackToRealYild = () => {
-    setCurrentState('realyild');
+  const handleBackToRealYield = () => {
+    setCurrentState('realyield');
   };
 
   if (currentState === 'empresa') {
-    return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: '#f0f0f0', 
-        padding: '20px',
-        fontFamily: 'Arial, sans-serif'
-      }}>
-        <button 
-          onClick={handleBackToRealYild}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#666',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
-        >
-          ← Voltar para RealYild
-        </button>
-        <h1 style={{ color: '#333', marginBottom: '20px' }}>Dashboard Empresa</h1>
-        <p style={{ color: '#666' }}>Gerencie seus tokens de imóveis</p>
-      </div>
-    );
+    return <EmpresaDashboard />;
   }
 
   if (currentState === 'investidor') {
@@ -63,7 +31,7 @@ function App() {
         fontFamily: 'Arial, sans-serif'
       }}>
         <button 
-          onClick={handleBackToRealYild}
+          onClick={handleBackToRealYield}
           style={{
             padding: '10px 20px',
             backgroundColor: '#666',
@@ -74,7 +42,7 @@ function App() {
             marginBottom: '20px'
           }}
         >
-          ← Voltar para RealYild
+          ← Voltar para RealYield
         </button>
         <h1 style={{ color: '#333', marginBottom: '20px' }}>Dashboard Investidor</h1>
         <p style={{ color: '#666' }}>Gerencie seus investimentos em tokens de imóveis</p>
@@ -82,41 +50,7 @@ function App() {
     );
   }
 
-  if (isAuthenticating) {
-    return (
-      <div style={{ 
-        minHeight: '100vh', 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        flexDirection: 'column',
-        padding: '20px',
-        fontFamily: 'Arial, sans-serif'
-      }}>
-        <div style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          padding: '40px',
-          borderRadius: '20px',
-          textAlign: 'center',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-          maxWidth: '500px',
-          width: '100%'
-        }}>
-          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🔐</div>
-          <h2 style={{ color: '#333', marginBottom: '20px', fontSize: '1.8rem' }}>
-            Autenticação com Passkey
-          </h2>
-          <div className="spinner"></div>
-          <p style={{ color: '#666', marginTop: '20px' }}>
-            Aguarde a autenticação...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Tela principal RealYild
+  // Tela principal RealYield
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -136,7 +70,7 @@ function App() {
         fontWeight: 'bold',
         textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
       }}>
-        RealYild
+        RealYield
       </h1>
       <p style={{ 
         fontSize: '1.2rem', 
@@ -216,7 +150,7 @@ function App() {
         marginTop: '40px',
         textAlign: 'center'
       }}>
-        Powered by Stellar Network • Autenticação com Passkey
+        Powered by Stellar Network
       </div>
     </div>
   );

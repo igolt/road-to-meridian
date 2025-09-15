@@ -39,7 +39,7 @@ export class PasskeyService {
       // Simular usuário retornado
       const user: PasskeyUser = {
         id: 'user_' + Date.now(),
-        name: segment === 'empresa' ? 'Empresa RealYild' : 'Investidor RealYild',
+        name: segment === 'empresa' ? 'Empresa RealYield' : 'Investidor RealYield',
         displayName: segment === 'empresa' ? 'Empresa' : 'Investidor',
         segment
       };
@@ -65,14 +65,14 @@ export class PasskeyService {
    */
   logout(): void {
     this.currentUser = null;
-    localStorage.removeItem('realyild_user');
+    localStorage.removeItem('realyield_user');
   }
 
   /**
    * Verifica se há um usuário salvo
    */
   hasStoredUser(): boolean {
-    return !!localStorage.getItem('realyild_user');
+    return !!localStorage.getItem('realyield_user');
   }
 
   /**
@@ -80,7 +80,7 @@ export class PasskeyService {
    */
   loadStoredUser(): PasskeyUser | null {
     try {
-      const stored = localStorage.getItem('realyild_user');
+      const stored = localStorage.getItem('realyield_user');
       if (stored) {
         this.currentUser = JSON.parse(stored);
         return this.currentUser;
@@ -96,7 +96,7 @@ export class PasskeyService {
    */
   private saveUserToStorage(user: PasskeyUser): void {
     try {
-      localStorage.setItem('realyild_user', JSON.stringify(user));
+      localStorage.setItem('realyield_user', JSON.stringify(user));
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
     }
