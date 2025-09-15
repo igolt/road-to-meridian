@@ -1,0 +1,23 @@
+{
+  "name": "rwa-real-estate-token-stellar",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy:testnet": "node scripts/deploy.js --network testnet",
+    "deploy:mainnet": "node scripts/deploy.js --network mainnet",
+    "test": "jest",
+    "generate-key": "node scripts/generate-keypair.js",
+    "demo": "node examples/basic-usage.js"
+  },
+  "dependencies": {
+    "stellar-sdk": "^11.0.0",
+    "dotenv": "^16.4.5",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "@types/node": "^20.0.0"
+  }
+}

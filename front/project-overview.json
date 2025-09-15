@@ -1,0 +1,391 @@
+{
+  "project": {
+    "name": "TokenEasy - RWA Tokenization Platform",
+    "version": "0.0.0",
+    "description": "Production-ready dashboard for creating and deploying Real World Asset (RWA) tokens on both EVM and Stellar networks through a unified, guided wizard interface.",
+    "license": "MIT",
+    "type": "module"
+  },
+  "architecture": {
+    "frontend": {
+      "framework": "React 18 with TypeScript",
+      "build_tool": "Vite 5.4.19",
+      "styling": "Tailwind CSS with shadcn/ui",
+      "state_management": "React Query + Zustand",
+      "form_handling": "React Hook Form + Zod validation"
+    },
+    "backend": {
+      "deployment": "Client-side deployment (no backend server)",
+      "blockchain_integration": "Direct blockchain interactions",
+      "wallet_integration": "RainbowKit (EVM) + Freighter (Stellar)"
+    },
+    "blockchains": {
+      "evm": {
+        "networks": ["Polygon Amoy (Testnet)", "Polygon Mainnet"],
+        "standards": ["ERC-20", "ERC-721", "ERC-1155"],
+        "deployment": "Hardhat + viem"
+      },
+      "stellar": {
+        "networks": ["Stellar Testnet", "Stellar Mainnet"],
+        "standards": ["Classic Asset", "Soroban Token"],
+        "deployment": "Stellar SDK"
+      }
+    }
+  },
+  "project_structure": {
+    "root": {
+      "config_files": [
+        "package.json - Main project dependencies and scripts",
+        "tsconfig.json - TypeScript configuration",
+        "vite.config.ts - Vite build configuration",
+        "tailwind.config.js - Tailwind CSS configuration",
+        "env.example - Environment variables template",
+        "index.html - Main HTML template"
+      ],
+      "source_code": {
+        "src/": {
+          "main_entry": "main.tsx - React application bootstrap",
+          "app_component": "App.tsx - Main application component",
+          "styling": "index.css - Global styles",
+          "components/": {
+            "wizard/": [
+              "Wizard.tsx - Main wizard component",
+              "Step1StackStandard.tsx - Blockchain selection",
+              "Step2Basics.tsx - Token configuration",
+              "Step3Rules.tsx - Compliance rules",
+              "Step4Preview.tsx - Preview and deployment"
+            ],
+            "ui/": [
+              "button.tsx", "card.tsx", "input.tsx", "label.tsx",
+              "select.tsx", "switch.tsx", "toast.tsx", "toaster.tsx"
+            ],
+            "TokenEasyHeader.tsx - Application header"
+          },
+          "core/": {
+            "types.ts - TypeScript type definitions",
+            "utils.ts - Utility functions",
+            "utils.test.ts - Test utilities"
+          },
+          "deployers/": {
+            "evmDeployer.ts - EVM blockchain deployment",
+            "stellarDeployer.ts - Stellar blockchain deployment"
+          },
+          "lib/": {
+            "utils.ts - Additional utilities"
+          },
+          "test/": {
+            "setup.ts - Test configuration"
+          }
+        }
+      },
+      "blockchain_implementations": {
+        "EVM/": {
+          "contracts/": {
+            "RealEstateToken.sol - ERC-20 token contract"
+          },
+          "scripts/": {
+            "deploy.js - Deployment scripts"
+          },
+          "hardhat.config.js - Hardhat configuration",
+          "package.json - EVM-specific dependencies"
+        },
+        "stellar-version/": {
+          "src/": {
+            "RealEstateToken.js - Stellar token implementation"
+          },
+          "scripts/": {
+            "deploy.js - Stellar deployment",
+            "generate-keypair.js - Key generation"
+          },
+          "examples/": {
+            "basic-usage.js - Usage examples"
+          },
+          "package.json - Stellar-specific dependencies"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "frontend_dependencies": {
+      "ui_libraries": [
+        "@radix-ui/react-accordion",
+        "@radix-ui/react-alert-dialog",
+        "@radix-ui/react-checkbox",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-dropdown-menu",
+        "@radix-ui/react-label",
+        "@radix-ui/react-progress",
+        "@radix-ui/react-select",
+        "@radix-ui/react-separator",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-switch",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-toast",
+        "@radix-ui/react-tooltip"
+      ],
+      "blockchain_integration": [
+        "@rainbow-me/rainbowkit - EVM wallet integration",
+        "@stellar/freighter-api - Stellar wallet integration",
+        "@stellar/stellar-sdk - Stellar blockchain SDK",
+        "viem - EVM blockchain interactions",
+        "wagmi - EVM wallet management"
+      ],
+      "utilities": [
+        "@tanstack/react-query - Data fetching and caching",
+        "class-variance-authority - Component variants",
+        "clsx - Conditional CSS classes",
+        "lucide-react - Icons",
+        "react-hook-form - Form handling",
+        "tailwind-merge - Tailwind class merging",
+        "zod - Schema validation",
+        "zustand - State management"
+      ],
+      "build_tools": [
+        "vite - Build tool and dev server",
+        "typescript - TypeScript compiler"
+      ]
+    },
+    "dev_dependencies": {
+      "typescript_types": [
+        "@types/node",
+        "@types/react",
+        "@types/react-dom"
+      ],
+      "linting": [
+        "@typescript-eslint/eslint-plugin",
+        "@typescript-eslint/parser",
+        "eslint",
+        "eslint-plugin-react-hooks",
+        "eslint-plugin-react-refresh"
+      ],
+      "build_tools": [
+        "@vitejs/plugin-react",
+        "autoprefixer",
+        "postcss",
+        "tailwindcss"
+      ],
+      "testing": [
+        "vitest"
+      ]
+    }
+  },
+  "environment_variables": {
+    "project_config": {
+      "VITE_EVM_PROJECT_NAME": "TokenEasy",
+      "VITE_DEFAULT_PROPERTY_URI": "https://example.com/property-docs"
+    },
+    "evm_network": {
+      "VITE_ALCHEMY_ID": "Optional Alchemy API key",
+      "VITE_INFURA_ID": "Optional Infura API key"
+    },
+    "stellar_network": {
+      "VITE_STELLAR_HORIZON_URL": "https://horizon-testnet.stellar.org",
+      "VITE_ENABLE_SOROBAN": "false",
+      "VITE_SOROBAN_RPC_URL": "Optional Soroban RPC URL"
+    }
+  },
+  "build_configuration": {
+    "vite": {
+      "port": 3000,
+      "host": true,
+      "alias": {
+        "@/*": "./src/*"
+      }
+    },
+    "typescript": {
+      "target": "ES2020",
+      "module": "ESNext",
+      "jsx": "react-jsx",
+      "strict": true,
+      "path_mapping": {
+        "@/*": ["./src/*"]
+      }
+    },
+    "hardhat": {
+      "solidity": "0.8.24",
+      "networks": {
+        "amoy": {
+          "url": "https://rpc-amoy.polygon.technology",
+          "gasPrice": "30 gwei"
+        },
+        "polygon": {
+          "url": "https://polygon-rpc.com"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "development": {
+      "npm run dev": "Start Vite development server",
+      "npm run build": "Build for production",
+      "npm run preview": "Preview production build",
+      "npm run lint": "Run ESLint",
+      "npm run test": "Run Vitest tests"
+    },
+    "evm_specific": {
+      "npm run deploy:testnet": "Deploy to EVM testnet",
+      "npm run deploy:mainnet": "Deploy to EVM mainnet"
+    },
+    "stellar_specific": {
+      "npm run deploy:testnet": "Deploy to Stellar testnet",
+      "npm run deploy:mainnet": "Deploy to Stellar mainnet",
+      "npm run generate-key": "Generate Stellar keypair",
+      "npm run demo": "Run usage examples"
+    }
+  },
+  "features": {
+    "multi_chain_support": {
+      "evm": {
+        "networks": ["Polygon Amoy", "Polygon Mainnet"],
+        "standards": ["ERC-20", "ERC-721", "ERC-1155"],
+        "wallets": ["MetaMask", "Other EVM wallets via RainbowKit"]
+      },
+      "stellar": {
+        "networks": ["Testnet", "Mainnet"],
+        "standards": ["Classic Assets", "Soroban Tokens"],
+        "wallets": ["Freighter"]
+      }
+    },
+    "token_configuration": {
+      "basic": [
+        "Token name",
+        "Symbol/Asset Code",
+        "Property URI",
+        "Description",
+        "Initial supply",
+        "Decimals"
+      ],
+      "compliance": [
+        "KYC requirements",
+        "Token lockups",
+        "Pausable contracts",
+        "Snapshots",
+        "Whitelist management"
+      ]
+    },
+    "user_interface": {
+      "wizard_steps": [
+        "Stack & Standard Selection",
+        "Token Basics Configuration",
+        "Compliance Rules Setup",
+        "Preview & Deployment"
+      ],
+      "ui_components": [
+        "Modern design with shadcn/ui",
+        "Responsive layout",
+        "Progress indicators",
+        "Form validation",
+        "Toast notifications"
+      ]
+    }
+  },
+  "smart_contracts": {
+    "evm": {
+      "RealEstateToken.sol": {
+        "standard": "ERC-20",
+        "inheritance": ["ERC20", "Ownable"],
+        "functions": [
+          "constructor(name, symbol, initialSupply, propertyURI)",
+          "setPropertyURI(newURI) - Update property documentation"
+        ],
+        "features": [
+          "Property URI storage",
+          "Owner-controlled metadata updates",
+          "Standard ERC-20 functionality"
+        ]
+      }
+    },
+    "stellar": {
+      "RealEstateToken.js": {
+        "type": "Classic Asset Implementation",
+        "functions": [
+          "createToken() - Create new asset",
+          "transferTokens() - Transfer tokens",
+          "updatePropertyURI() - Update property docs",
+          "getTokenInfo() - Retrieve token information"
+        ],
+        "features": [
+          "Asset creation and management",
+          "Metadata storage via Stellar data entries",
+          "Trustline management",
+          "Multi-signature support"
+        ]
+      }
+    }
+  },
+  "deployment_features": {
+    "estimation": {
+      "gas_fees": "Estimated costs for transactions",
+      "deployment_steps": "Step-by-step deployment process",
+      "network_fees": "Real-time fee calculations"
+    },
+    "simulation": {
+      "current_state": "Simulated deployments for demonstration",
+      "mock_data": "Sample transaction hashes and addresses",
+      "progress_tracking": "Real-time deployment progress updates"
+    },
+    "production_readiness": {
+      "wallet_integration": "Ready for real wallet connections",
+      "network_switching": "Multi-network support",
+      "error_handling": "Comprehensive error management",
+      "transaction_signing": "Secure transaction signing"
+    }
+  },
+  "development_status": {
+    "completed": [
+      "Multi-chain architecture",
+      "Complete UI/UX design",
+      "Smart contract implementations",
+      "Wallet integration setup",
+      "Deployment infrastructure",
+      "TypeScript type safety",
+      "Build and development tooling"
+    ],
+    "ready_for_production": [
+      "Real blockchain deployments",
+      "Live wallet connections",
+      "Production environment setup",
+      "Security audits",
+      "Comprehensive testing"
+    ],
+    "roadmap": [
+      "ERC-1155 tranche management",
+      "Advanced compliance features",
+      "Token verification integration",
+      "Multi-language support",
+      "Analytics dashboard",
+      "Mobile application"
+    ]
+  },
+  "key_files": {
+    "entry_points": {
+      "frontend": "src/main.tsx",
+      "html": "index.html"
+    },
+    "configurations": {
+      "typescript": "tsconfig.json",
+      "vite": "vite.config.ts",
+      "tailwind": "tailwind.config.js",
+      "hardhat": "EVM/hardhat.config.js"
+    },
+    "contracts": {
+      "evm": "EVM/contracts/RealEstateToken.sol",
+      "stellar": "stellar-version/src/RealEstateToken.js"
+    },
+    "components": {
+      "main_app": "src/App.tsx",
+      "wizard": "src/components/Wizard.tsx",
+      "header": "src/components/TokenEasyHeader.tsx"
+    }
+  },
+  "run_commands": {
+    "development": "npm run dev",
+    "build": "npm run build",
+    "lint": "npm run lint",
+    "test": "npm run test"
+  },
+  "access_points": {
+    "local_development": "http://localhost:3000",
+    "network_access": "http://192.168.15.66:3000"
+  }
+}
