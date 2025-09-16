@@ -30,10 +30,12 @@ impl From<Error> for soroban_sdk::Error {
 pub struct Property {
     pub id: u128,
     pub builder: Address,
-    pub name: String,
+    pub name_property: String,
     pub ele_quer: i128,
     pub ele_tem: i128,
     pub total_supply: i128,
+    pub nome_construtora: String, 
+    pub sigla: String,
 }
 
 #[contractimpl]
@@ -58,6 +60,9 @@ impl RealEstateTokenContract {
         ele_quer: i128,
         ele_tem: i128,
         total_supply: i128,
+        nome_construtora: String,
+        sigla: String
+
     ) -> u128 {
         builder.require_auth();
         Self::_verify_builder(&env, &builder);
@@ -75,6 +80,8 @@ impl RealEstateTokenContract {
             ele_quer,
             ele_tem,
             total_supply,
+            nome_construtora,
+            sigla
         };
 
         let mut properties = Self::get_properties_storage(&env);
@@ -164,8 +171,16 @@ impl RealEstateTokenContract {
     }
 
     pub fn balance(investment: i128, property: Property) -> i128{
-        let price: i128 = property.ele_quer/property.total_supply;
+        let price = Self::price(property: Property)
         investment/price
+    }
+
+    pub fn price(property: Property) -> i128{
+        property.ele_quer/property.total_supply
+    }
+
+    pub fn percentual(property: Property) -> u128{
+        property.ele_tem/property.ele_quer
     }
 
     fn _verify_builder(env: &Env, builder: &Address) {

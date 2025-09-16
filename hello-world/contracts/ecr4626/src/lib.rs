@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{contract, contractimpl, Address, Env, String};
-
+use chrono::{Datelike, Duration, Local, NaiveDate};
 use crate::ecr1155::Property;
 
 mod ecr1155 {
@@ -55,15 +55,108 @@ impl LoanContract {
     pub fn initialize(e: Env, admin: Address, rwa_token_address: Address) {
         e.storage().instance().set(&"admin", &admin);
         e.storage().instance().set(&"rwa_token", &rwa_token_address);
+        e.storage().instance().set(&"next_borrow_id", &1u128);
         e.storage().instance().set(&"next_loan_id", &1u128);
     }
-
-    pub fn create_borrow(e: Env, builder: Address, property_id: u128, duration_days: u32) -> String   {
-        let ecr1155_client = ecr1155::Client::new(&e, &str_to_address(&e, "CD7MWUED4MXNKY3ADSWJREYWK6AFRHH2ZNCEBIRN5UZBSZLFKZHYIRLH"));
-
-        let property = ecr1155_client.get_property(&property_id);
-        return property.name
+    fn adicionar_dias(dias: i64) -> String {
+        let hoje = Local::now();
+        let nova_data = hoje + Duration::days(dias);
+        
+        format!("{:02}/{:02}/{:04}", nova_data.day(), nova_data.month(), nova_data.year())
     }
+
+    pub fn create_borrow(e: Env, builder: Address, property_id: u128, duration_days: u32, apy: u32) -> u128   {
+        let ecr1155_client = ecr1155::Client::new(&e, &str_to_address(&e, "CD7MWUED4MXNKY3ADSWJREYWK6AFRHH2ZNCEBIRN5UZBSZLFKZHYIRLH"));
+        let property = ecr1155_client.get_property(&property_id);
+
+        let mut borrows: Map<u128, 
+            (Address, //Endereço da construtora
+            String, //Nome da cosntrutora
+            String, //Nome do Imovel
+            String, //Data Limite
+            u32, //APY
+            i128, //Preco por token
+            u128)>= //Percentual restante
+            e.storage().instance().get(&"borrows").unwrap_or(Map::new(&e));
+        let updated_borrow_info = 
+            (builder, 
+            property.nome_construtora, 
+            property.name_property,
+            Self::adicionar_dias(duration_days),
+            apy,
+            property.price,
+            property.percentual
+            );
+        let borrow_id: u128 = e.storage().instance().get(&"next_borrow_id")
+        borrows.set(borrow_id, updated_borrow_info);
+        e.storage().instance().set(&"borrows", &borrows);
+        e.storage().instance().set(&"next_borrow_id", &(borrow_id + 1));
+        borrow_id
+    }
+
+    pub fn create_loan (e: Env, id_borrow: u128, builder : Address, investorAddress: Address, investment : u128) { //Assinatura do investidor, com o dinheiro dele
+        let ecr1155_client = ecr1155::Client::new(&e, &str_to_address(&e, "CD7MWUED4MXNKY3ADSWJREYWK6AFRHH2ZNCEBIRN5UZBSZLFKZHYIRLH"));
+        let property = ecr1155_client.get_property(&property_id);
+
+        let mut loans: Map<u128, //ID do loan
+        (u128, //ID do borrow
+        Address, //Endereço construtora
+        Address, //Endereço client
+        u128)> = //Dinheiro
+        e.storage().instance().get(&"loans").unwrap_or(Map::new(&e));
+
+        let update_loan_info = 
+        (id_borrow,
+        builder,
+        investorAddress,
+        investment
+        );
+
+        let loan_id: u128 = e.storage().instance().get(&"next_loan_id")
+        loans.set(loan_id, update_loan_info);
+        e.storage().instance().set(&"loans", &loans);
+        e.storage().instance().set(&"next_loan_id", &(loan_id + 1));
+        loan_id
+    }
+
+    pub fn get_borrows(e: &Env) -> Map<u128, (Address, String, String, String, u32, i128, u128)> {
+        let hoje = Local::now().naive_local().date();
+        let mut borrows: Map<u128, (Address, String, String, String, u32, i128, u128)> = 
+            e.storage().instance().get(&"borrows").unwrap_or(Map::new(e));
+        
+        let mut borrows_filtrados = Map::new(e);
+        
+        for (id, borrow) in borrows.iter() {
+            let (builder, construtora_nome, imovel_nome, data_limite_str, apy, preco, percentual) = borrow;
+            
+            // Converter a string de data para NaiveDate
+            if let Ok(data_limite) = parse_data_string(&data_limite_str) {
+                if data_limite > hoje {
+                    borrows_filtrados.set(id, (builder, construtora_nome, imovel_nome, data_limite_str, apy, preco, percentual));
+                }
+            }
+        }
+        
+        borrows_filtrados
+    }
+
+    // Função auxiliar para converter string "DD/MM/AAAA" para NaiveDate
+    fn parse_data_string(data_str: &String) -> Result<NaiveDate, ()> {
+        let parts: Vec<&str> = data_str.split('/').collect();
+        if parts.len() != 3 {
+            return Err(());
+        }
+        
+        let dia = parts[0].parse::<u32>().map_err(|_| ())?;
+        let mes = parts[1].parse::<u32>().map_err(|_| ())?;
+        let ano = parts[2].parse::<i32>().map_err(|_| ())?;
+        
+        NaiveDate::from_ymd_opt(ano, mes, dia).ok_or(())
+    }
+
+    
+
+
 
 
 
