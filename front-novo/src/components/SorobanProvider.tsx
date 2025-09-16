@@ -1,27 +1,34 @@
 import React from 'react';
 import { SorobanReactProvider } from '@soroban-react/core';
 import { freighter } from '@soroban-react/freighter';
-import { futurenet, testnet, mainnet } from '@soroban-react/chains';
+import { WalletProvider } from '../wallet/WalletProvider';
 
 interface SorobanProviderProps {
   children: React.ReactNode;
 }
 
-const SorobanProvider: React.FC<SorobanProviderProps> = ({ children }) => {
-  // Configuração das redes disponíveis (todas as redes para suportar qualquer carteira)
-  const allowedChains = [futurenet, testnet, mainnet];
-  
-  // Configuração das carteiras disponíveis
-  const connectors = [freighter()];
+// Configuração manual da chain testnet
+const testnetChain = {
+  id: 'testnet',
+  name: 'Testnet',
+  networkPassphrase: 'Test SDF Network ; September 2015',
+  network: 'testnet',
+  networkUrl: 'https://soroban-testnet.stellar.org',
+  rpcUrl: 'https://soroban-testnet.stellar.org',
+  iconBackground: '#fff',
+  iconUrl: 'https://stellar.org/favicon.ico',
+} as any;
 
+const SorobanProvider: React.FC<SorobanProviderProps> = ({ children }) => {
   return (
-    <SorobanReactProvider
-      chains={allowedChains}
-      connectors={connectors}
-      appName="RealYield"
-      autoconnect={false}
-    >
-      {children}
+    <SorobanReactProvider 
+      appName="RealYield" 
+      chains={[testnetChain]} 
+      connectors={[freighter()]}
+    > 
+      <WalletProvider>
+        {children}
+      </WalletProvider>
     </SorobanReactProvider>
   );
 };

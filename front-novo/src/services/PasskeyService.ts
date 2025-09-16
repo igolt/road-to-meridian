@@ -21,10 +21,10 @@ export class PasskeyService {
    */
   isSupported(): boolean {
     return !!(
-      window.PublicKeyCredential &&
-      window.navigator.credentials &&
-      window.navigator.credentials.create &&
-      window.navigator.credentials.get
+      (window as any).PublicKeyCredential &&
+      (window as any).navigator?.credentials &&
+      typeof (window as any).navigator?.credentials?.create === 'function' &&
+      typeof (window as any).navigator?.credentials?.get === 'function'
     );
   }
 

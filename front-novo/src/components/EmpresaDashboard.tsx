@@ -1,5 +1,9 @@
 import { useState } from 'react';
+import { useWallet } from '../wallet/WalletProvider';
+import { useI18n } from '../i18n/index';
+import { useContractWrite } from '@/blockchain/hooks/useContractWrite';
 import { useSorobanReact } from '@soroban-react/core';
+import { useContractRead } from '@/blockchain/hooks/useContractRead';
 
 interface RWAFormData {
   assetName: string;
@@ -12,6 +16,10 @@ interface RWAFormData {
   expectedCompletion: string;
   expectedAmount: string;
   interestRate: string;
+  prazo: string;
+  constructorName: string;
+  tokenSymbol: string;
+  ipfs: string;
 }
 
 interface Contract {
@@ -22,18 +30,21 @@ interface Contract {
   status: 'active' | 'completed' | 'draft';
   createdAt: string;
   completionDate?: string;
+  dueDate?: string;
   totalInvested: string;
   currentValue: string;
   profit: string;
   investors: number;
   loanAmount: string;
   interestRate: string;
+  companyWallet: string;
 }
 
-type DashboardTab = 'emissao' | 'contratos' | 'emprestimos' | 'metricas';
+type DashboardTab = 'emissao' | 'contratos' | 'metricas';
 
 function EmpresaDashboard() {
-  const sorobanContext = useSorobanReact();
+  const { address, network, isInstalled, isConnecting, connect, disconnect } = useWallet();
+  const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emissao');
   const [rwaForm, setRwaForm] = useState<RWAFormData>({
     assetName: '',
@@ -45,8 +56,31 @@ function EmpresaDashboard() {
     location: '',
     expectedCompletion: '',
     expectedAmount: '',
-    interestRate: ''
+    interestRate: '',
+    prazo: '12',
+    constructorName: '',
+    tokenSymbol: '',
+    ipfs: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const { registerProperty, isWriteLoading, transferProperty } = useContractWrite();
+  const soroban = useSorobanReact();
+  const { getProperty, simulateBalance, isReadLoading } = useContractRead();
+
+  // Consulta de propriedade / simulação
+  const [queryId, setQueryId] = useState<string>('');
+  const [queried, setQueried] = useState<any | null>(null);
+  const [simInvestment, setSimInvestment] = useState<string>('');
+  const [simResult, setSimResult] = useState<string>('');
+
+  // Transferência
+  const [transferTo, setTransferTo] = useState<string>('');
+  const [transferAmount, setTransferAmount] = useState<string>('');
+  const [transferPropId, setTransferPropId] = useState<string>('');
+  const [txMessage, setTxMessage] = useState<string>('');
+  const [lastRegisterHash, setLastRegisterHash] = useState<string>('');
+  const [lastTransferHash, setLastTransferHash] = useState<string>('');
 
   // Dados simulados de contratos
   const [contracts] = useState<Contract[]>([
@@ -57,12 +91,14 @@ function EmpresaDashboard() {
       priceUSDC: '0.50',
       status: 'active',
       createdAt: '2024-01-15',
+      dueDate: '2026-01-15',
       totalInvested: '450000',
       currentValue: '520000',
       profit: '70000',
       investors: 23,
       loanAmount: '500000',
-      interestRate: '12'
+      interestRate: '12',
+      companyWallet: 'GABC1234567890ABCDEF1234567890ABCDEF1234'
     },
     {
       id: '2',
@@ -77,7 +113,8 @@ function EmpresaDashboard() {
       profit: '300000',
       investors: 45,
       loanAmount: '2000000',
-      interestRate: '15'
+      interestRate: '15',
+      companyWallet: 'GDEF1234567890ABCDEF1234567890ABCDEF5678'
     },
     {
       id: '3',
@@ -86,12 +123,14 @@ function EmpresaDashboard() {
       priceUSDC: '0.75',
       status: 'active',
       createdAt: '2024-03-01',
+      dueDate: '2025-09-01',
       totalInvested: '320000',
       currentValue: '380000',
       profit: '60000',
       investors: 18,
       loanAmount: '1500000',
-      interestRate: '10'
+      interestRate: '10',
+      companyWallet: 'GHIJ1234567890ABCDEF1234567890ABCDEF9012'
     }
   ]);
 
@@ -99,100 +138,377 @@ function EmpresaDashboard() {
     setRwaForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCreateRWA = () => {
-    // Simular criação de RWA
-    alert('RWA criado com sucesso! Token será emitido na rede Stellar.');
-    setRwaForm({
-      assetName: '',
-      definition: '',
-      totalSupply: '',
-      propertyURI: '',
-      metadatas: '',
-      constructionType: '',
-      location: '',
-      expectedCompletion: '',
-      expectedAmount: '',
-      interestRate: ''
-    });
+  const validateForm = (): string[] => {
+    const errors: string[] = [];
+
+    if (!rwaForm.assetName.trim()) errors.push(t('validation.assetNameRequired'));
+    if (!rwaForm.definition.trim()) errors.push(t('validation.definitionRequired'));
+    if (!rwaForm.totalSupply.trim()) errors.push(t('validation.totalSupplyRequired'));
+    if (!rwaForm.location.trim()) errors.push(t('validation.locationRequired'));
+    // Removido: data de vencimento obrigatória para não bloquear testes
+    // if (!rwaForm.expectedCompletion.trim()) errors.push(t('validation.dueDateRequired'));
+    if (!rwaForm.expectedAmount.trim()) errors.push(t('validation.expectedAmountRequired'));
+    if (!rwaForm.interestRate.trim()) errors.push(t('validation.interestRateRequired'));
+    if (!rwaForm.prazo.trim()) errors.push(t('validation.termRequired'));
+    if (!rwaForm.propertyURI.trim()) errors.push(t('validation.ipfsUriRequired'));
+    if (!rwaForm.constructorName.trim()) errors.push(t('validation.constructorNameRequired'));
+    if (!rwaForm.tokenSymbol.trim()) errors.push(t('validation.tokenSymbolRequired'));
+
+    // Validações numéricas
+    if (rwaForm.totalSupply && isNaN(Number(rwaForm.totalSupply))) {
+      errors.push(t('validation.totalSupplyInvalid'));
+    }
+    if (rwaForm.expectedAmount && isNaN(Number(rwaForm.expectedAmount))) {
+      errors.push(t('validation.expectedAmountInvalid'));
+    }
+    if (rwaForm.interestRate && isNaN(Number(rwaForm.interestRate))) {
+      errors.push(t('validation.interestRateInvalid'));
+    }
+    if (rwaForm.prazo && isNaN(Number(rwaForm.prazo))) {
+      errors.push(t('validation.termInvalid'));
+    }
+
+    return errors;
+  };
+
+  const handleCreateRWA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitMessage(null);
+    
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setSubmitMessage({type: 'error', text: errors.join(', ')});
+      return;
+    }
+    if (!address && !soroban.address) {
+      try {
+        await soroban.connect();
+      } catch (e) {}
+      if (!address && !soroban.address) {
+        setSubmitMessage({ type: 'error', text: 'Conecte sua carteira Freighter antes de continuar.' });
+        return;
+      }
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const totalSupply = BigInt(rwaForm.totalSupply);
+      const eleQuer = BigInt(Math.floor(parseFloat(rwaForm.expectedAmount) || 0));
+      const eleTem = BigInt(0);
+
+      const { txHash, newId } = await registerProperty({
+        builder: address || soroban.address!,
+        property_name: rwaForm.assetName,
+        ele_quer: eleQuer,
+        ele_tem: eleTem,
+        total_supply: totalSupply,
+        nome_construtora: rwaForm.constructorName,
+        ipfs: rwaForm.ipfs || rwaForm.propertyURI,
+        sigla: rwaForm.tokenSymbol,
+      });
+
+      setSubmitMessage({
+        type: 'success',
+        text: `Propriedade registrada com sucesso! ID: ${newId.toString()} | TX: ${txHash}`
+      });
+      setLastRegisterHash(txHash);
+
+      // Limpar formulário
+      setRwaForm({
+        assetName: '',
+        definition: '',
+        totalSupply: '',
+        propertyURI: '',
+        metadatas: '',
+        constructionType: '',
+        location: '',
+        expectedCompletion: '',
+        expectedAmount: '',
+        interestRate: '',
+        prazo: '12',
+        constructorName: '',
+        tokenSymbol: '',
+        ipfs: ''
+      });
+      
+    } catch (error: any) {
+      console.error(error);
+      if (error.message && error.message.includes('#1001')) {
+        setSubmitMessage({type: 'error', text: 'Erro de autorização. O contrato já foi inicializado por outro usuário.'});
+      } else {
+        setSubmitMessage({type: 'error', text: t('messages.error')});
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBackToRealYield = () => {
     window.location.reload();
   };
 
+  const handleQueryProperty = async () => {
+    setQueried(null);
+    setSimResult('');
+    if (!queryId) return;
+    const prop = await getProperty(queryId);
+    setQueried(prop);
+  };
+
+  const handleSimulate = async () => {
+    if (!queried || !simInvestment) return;
+    const res = await simulateBalance(simInvestment, queried);
+    setSimResult(res.toString());
+  };
+
+  const handleTransfer = async () => {
+    setTxMessage('');
+    if (!address) {
+      setTxMessage('Conecte sua carteira Freighter.');
+      return;
+    }
+    if (!transferTo || !transferAmount || !transferPropId) return;
+    try {
+      const hash = await transferProperty({
+        from: address,
+        to: transferTo,
+        property_id: BigInt(transferPropId),
+        amount: BigInt(transferAmount),
+      });
+      setTxMessage(`Transferência enviada! TX: ${hash}`);
+      setLastTransferHash(hash);
+    } catch (e) {
+      setTxMessage('Falha ao transferir. Verifique os dados e tente novamente.');
+    }
+  };
+
   const activeContracts = contracts.filter(c => c.status === 'active');
   const completedContracts = contracts.filter(c => c.status === 'completed');
-  const totalProfit = contracts.reduce((sum, c) => sum + parseFloat(c.profit), 0);
-  const totalInvested = contracts.reduce((sum, c) => sum + parseFloat(c.totalInvested), 0);
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f8fafc',
-      fontFamily: 'Arial, sans-serif'
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%)',
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
     }}>
+
+      {/* Background Pattern */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `radial-gradient(circle at 25% 25%, rgba(76, 139, 245, 0.1) 0%, transparent 50%),
+                         radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                         radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)`,
+        animation: 'float 20s ease-in-out infinite',
+        pointerEvents: 'none'
+      }} />
+
       {/* Header */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '20px', 
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '20px'
+      <header style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        padding: '20px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        zIndex: 10
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #4C8BF5 0%, #8b5cf6 100%)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: 'white',
+            boxShadow: '0 8px 32px rgba(76, 139, 245, 0.3)'
+          }}>
+            R
+          </div>
           <div>
-            <h1 style={{ color: '#333', margin: 0, fontSize: '2rem' }}>
-              🏢 Dashboard Empresa - RealYield
-            </h1>
-            {sorobanContext.address && (
-              <p style={{ color: '#666', margin: '5px 0 0 0', fontSize: '14px' }}>
-                🔗 Carteira: {sorobanContext.address.slice(0, 8)}...{sorobanContext.address.slice(-8)}
-              </p>
+            <h3 style={{
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: '700',
+              margin: 0,
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              {t('company.title')}
+            </h3>
+            <p style={{
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '12px',
+              margin: 0,
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}>
+              Powered by Stellar
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '14px',
+            color: 'white',
+            fontSize: '12px'
+          }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: network ? '#22c55e' : '#f59e0b' }} />
+            <span>{network || 'Rede?'}</span>
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '14px',
+            color: 'white',
+            fontSize: '12px',
+            fontFamily: 'monospace'
+          }}>
+            {address ? (
+              <>
+                <span>{address.slice(0, 6)}...{address.slice(-4)}</span>
+                <button onClick={disconnect} style={{ background: 'transparent', border: 'none', color: '#fca5a5', cursor: 'pointer' }}>Sair</button>
+              </>
+            ) : (
+              <button onClick={connect} disabled={!isInstalled || isConnecting} style={{ background: 'transparent', border: 'none', color: 'white', cursor: isInstalled ? 'pointer' : 'not-allowed' }}>
+                {isInstalled ? (isConnecting ? 'Conectando...' : 'Conectar Freighter') : 'Instale a Freighter'}
+              </button>
             )}
           </div>
-          <button 
-            onClick={handleBackToRealYield}
+          <button
+            onClick={toggleLocale}
             style={{
-              padding: '10px 20px',
-              backgroundColor: '#6b7280',
+              padding: '8px 16px',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
               color: 'white',
-              border: 'none',
-              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '20px',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.2)';
+              target.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              target.style.transform = 'scale(1)';
             }}
           >
-            ← Voltar para RealYield
+            {t('common.toggleLanguage')}
+          </button>
+          <button
+            onClick={handleBackToRealYield}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.2)';
+              target.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              target.style.transform = 'scale(1)';
+            }}
+          >
+            {t('common.back')}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Navigation Tabs */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '0 20px', 
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '20px'
+      <div style={{
+        position: 'absolute',
+        top: '80px',
+        left: '40px',
+        right: '40px',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        padding: '16px 24px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        zIndex: 10
       }}>
-        <div style={{ display: 'flex', gap: '0' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           {[
-            { id: 'emissao', label: '🏗️ Emissão RWA', icon: '🏗️' },
-            { id: 'contratos', label: '📋 Contratos', icon: '📋' },
-            { id: 'emprestimos', label: '💰 Empréstimos', icon: '💰' },
-            { id: 'metricas', label: '📊 Métricas', icon: '📊' }
+            { id: 'emissao', label: t('tabs.emission'), icon: '🏗️' },
+            { id: 'contratos', label: t('tabs.contracts'), icon: '📋' },
+            { id: 'metricas', label: t('tabs.metrics'), icon: '📊' }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as DashboardTab)}
               style={{
-                padding: '15px 25px',
-                backgroundColor: activeTab === tab.id ? '#8b5cf6' : 'transparent',
-                color: activeTab === tab.id ? 'white' : '#6b7280',
+                padding: '12px 20px',
+                backgroundColor: activeTab === tab.id ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 'transparent',
+                background: activeTab === tab.id ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 'transparent',
+                color: activeTab === tab.id ? 'white' : 'rgba(107, 114, 128, 0.8)',
                 border: 'none',
+                borderRadius: '12px',
                 cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-                borderBottom: activeTab === tab.id ? '3px solid #7c3aed' : '3px solid transparent',
-                transition: 'all 0.3s ease'
+                fontSize: '14px',
+                fontWeight: activeTab === tab.id ? '600' : '500',
+                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                boxShadow: activeTab === tab.id ? '0 8px 24px rgba(139, 92, 246, 0.4)' : 'none',
+                transform: activeTab === tab.id ? 'scale(1.05)' : 'scale(1)'
+              }}
+              onMouseOver={(e) => {
+                if (activeTab !== tab.id) {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  target.style.color = 'rgba(255, 255, 255, 0.9)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (activeTab !== tab.id) {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.backgroundColor = 'transparent';
+                  target.style.color = 'rgba(107, 114, 128, 0.8)';
+                }
               }}
             >
               {tab.label}
@@ -202,32 +518,81 @@ function EmpresaDashboard() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <main style={{
+        marginTop: '140px',
+        padding: '40px',
+        position: 'relative',
+        zIndex: 5
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {activeTab === 'emissao' && (
           <div style={{ padding: '20px' }}>
-            <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-              🏗️ Emissão de RWA - Tokenização de Construção
-            </h2>
-            
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '30px', 
-              borderRadius: '15px', 
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-              marginBottom: '20px'
+            <h2 style={{
+              color: 'white',
+              marginBottom: '30px',
+              fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
+              fontWeight: '700',
+              textAlign: 'center',
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              animation: 'fadeInUp 0.8s ease-out'
             }}>
-              <h3 style={{ color: '#8b5cf6', marginBottom: '20px' }}>Informações do Projeto</h3>
+              {t('company.emission.title')}
+            </h2>
+
+            {/* Mensagem de feedback */}
+            {submitMessage && (
+              <div style={{
+                padding: '20px',
+                borderRadius: '16px',
+                marginBottom: '30px',
+                backgroundColor: submitMessage?.type === 'success' ?
+                  'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                backdropFilter: 'blur(20px)',
+                border: `2px solid ${submitMessage?.type === 'success' ?
+                  'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                color: submitMessage?.type === 'success' ? '#10b981' : '#ef4444',
+                textAlign: 'center',
+                fontWeight: '600',
+                animation: 'slideInDown 0.5s ease-out',
+                boxShadow: submitMessage?.type === 'success' ?
+                  '0 8px 24px rgba(16, 185, 129, 0.3)' : '0 8px 24px rgba(239, 68, 68, 0.3)'
+              }}>
+                {submitMessage?.type === 'success' ? '✅' : '❌'} {submitMessage?.text}
+                {submitMessage?.type === 'success' && lastRegisterHash && (
+                  <div style={{ marginTop: '8px' }}>
+                    <a href={`https://stellar.expert/explorer/testnet/tx/${lastRegisterHash}`} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'underline' }}>
+                      Ver no Explorer →
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateRWA}>
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                padding: '40px',
+                borderRadius: '24px',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                marginBottom: '30px',
+                animation: 'fadeInUp 1s ease-out'
+              }}>
+                <h3 style={{ color: '#8b5cf6', marginBottom: '20px' }}>{t('company.form.projectInfo')}</h3>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Nome do Asset (Token)
+                    {t('company.form.constructorName')}
                   </label>
                   <input
                     type="text"
-                    value={rwaForm.assetName}
-                    onChange={(e) => handleRWAFormChange('assetName', e.target.value)}
-                    placeholder="Ex: Residencial Solar Park"
+                    value={rwaForm.constructorName}
+                    onChange={(e) => handleRWAFormChange('constructorName', e.target.value)}
+                    placeholder="Ex: Construtora ABC Ltda"
+                    required
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -237,14 +602,17 @@ function EmpresaDashboard() {
                     }}
                   />
                 </div>
-                
+
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Tipo de Construção
+                    {t('company.form.assetName')}
                   </label>
-                  <select
-                    value={rwaForm.constructionType}
-                    onChange={(e) => handleRWAFormChange('constructionType', e.target.value)}
+                  <input
+                    type="text"
+                    value={rwaForm.assetName}
+                    onChange={(e) => handleRWAFormChange('assetName', e.target.value)}
+                    placeholder="Ex: Residencial Solar Park"
+                    required
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -252,25 +620,21 @@ function EmpresaDashboard() {
                       borderRadius: '8px',
                       fontSize: '16px'
                     }}
-                  >
-                    <option value="">Selecione o tipo</option>
-                    <option value="residencial">Residencial</option>
-                    <option value="comercial">Comercial</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="misto">Misto</option>
-                  </select>
+                  />
                 </div>
+
               </div>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Descrição do Projeto
+                  {t('company.form.definition')}
                 </label>
                 <textarea
                   value={rwaForm.definition}
                   onChange={(e) => handleRWAFormChange('definition', e.target.value)}
                   placeholder="Descreva detalhadamente o projeto de construção..."
                   rows={4}
+                  required
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -285,13 +649,14 @@ function EmpresaDashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Localização
+                    {t('company.form.location')}
                   </label>
                   <input
                     type="text"
                     value={rwaForm.location}
                     onChange={(e) => handleRWAFormChange('location', e.target.value)}
                     placeholder="Ex: São Paulo, SP - Brasil"
+                    required
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -302,23 +667,6 @@ function EmpresaDashboard() {
                   />
                 </div>
                 
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Previsão de Conclusão
-                  </label>
-                  <input
-                    type="date"
-                    value={rwaForm.expectedCompletion}
-                    onChange={(e) => handleRWAFormChange('expectedCompletion', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
               </div>
             </div>
 
@@ -329,18 +677,20 @@ function EmpresaDashboard() {
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
               marginBottom: '20px'
             }}>
-              <h3 style={{ color: '#3b82f6', marginBottom: '20px' }}>Configurações do Token</h3>
+              <h3 style={{ color: '#3b82f6', marginBottom: '20px' }}>{t('company.form.tokenSettings')}</h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Total de Tokens (Supply)
+                    {t('company.form.totalSupply')}
                   </label>
                   <input
                     type="number"
                     value={rwaForm.totalSupply}
                     onChange={(e) => handleRWAFormChange('totalSupply', e.target.value)}
                     placeholder="1000000"
+                    required
+                    min="1"
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -353,7 +703,28 @@ function EmpresaDashboard() {
                 
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Valor Esperado a Arrecadar (USDC)
+                    {t('company.form.tokenSymbol')}
+                  </label>
+                  <input
+                    type="text"
+                    value={rwaForm.tokenSymbol}
+                    onChange={(e) => handleRWAFormChange('tokenSymbol', e.target.value.toUpperCase())}
+                    placeholder="Ex: RSP"
+                    required
+                    maxLength={10}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+                
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    {t('company.form.borrowAmount')}
                   </label>
                   <input
                     type="number"
@@ -361,6 +732,8 @@ function EmpresaDashboard() {
                     value={rwaForm.expectedAmount}
                     onChange={(e) => handleRWAFormChange('expectedAmount', e.target.value)}
                     placeholder="500000"
+                    required
+                    min="0.01"
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -374,13 +747,14 @@ function EmpresaDashboard() {
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  URI do IPFS (Documentos do Projeto)
+                  {t('company.form.ipfsUri')}
                 </label>
                 <input
-                  type="text"
+                  type="url"
                   value={rwaForm.propertyURI}
                   onChange={(e) => handleRWAFormChange('propertyURI', e.target.value)}
                   placeholder="https://ipfs.io/ipfs/QmHash..."
+                  required
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -391,25 +765,6 @@ function EmpresaDashboard() {
                 />
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Metadados Adicionais (JSON)
-                </label>
-                <textarea
-                  value={rwaForm.metadatas}
-                  onChange={(e) => handleRWAFormChange('metadatas', e.target.value)}
-                  placeholder='{"area": "5000m²", "unidades": 50, "arquiteto": "João Silva"}'
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
             </div>
 
             <div style={{ 
@@ -419,13 +774,13 @@ function EmpresaDashboard() {
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
               marginBottom: '20px'
             }}>
-              <h3 style={{ color: '#10b981', marginBottom: '20px' }}>Configurações de Empréstimo</h3>
+              <h3 style={{ color: '#10b981', marginBottom: '20px' }}>{t('company.form.loanSettings')}</h3>
               
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Taxa de Juros Anual (%)
+                    {t('company.form.interestRate')}
                   </label>
                   <input
                     type="number"
@@ -433,6 +788,9 @@ function EmpresaDashboard() {
                     value={rwaForm.interestRate}
                     onChange={(e) => handleRWAFormChange('interestRate', e.target.value)}
                     placeholder="12.0"
+                    required
+                    min="0.1"
+                    max="100"
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -445,7 +803,31 @@ function EmpresaDashboard() {
                 
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Valor Total com Juros (USDC)
+                    {t('company.form.term')}
+                  </label>
+                  <input
+                    type="number"
+                    value={rwaForm.prazo}
+                    onChange={(e) => handleRWAFormChange('prazo', e.target.value)}
+                    placeholder="12"
+                    required
+                    min="1"
+                    max="60"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    {t('company.form.totalWithInterest')}
                   </label>
                   <input
                     type="text"
@@ -470,149 +852,207 @@ function EmpresaDashboard() {
               
             </div>
 
-            <button
-              onClick={handleCreateRWA}
-              style={{
-                width: '100%',
-                padding: '15px',
-                backgroundColor: '#8b5cf6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7c3aed'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8b5cf6'}
-            >
-              🚀 Criar RWA e Liberar para o Público
-            </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || isWriteLoading}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  backgroundColor: (isSubmitting || isWriteLoading) ? '#9ca3af' : '#8b5cf6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: (isSubmitting || isWriteLoading) ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseOver={(e) => {
+                  if (!(isSubmitting || isWriteLoading)) {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#7c3aed';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!(isSubmitting || isWriteLoading)) {
+                    (e.target as HTMLButtonElement).style.backgroundColor = '#8b5cf6';
+                  }
+                }}
+              >
+                {(isSubmitting || isWriteLoading) ? '⏳' : t('company.form.submit')}
+              </button>
+            </form>
+
+            {/* Consulta e simulação */}
+            <div style={{ marginTop: '30px', background: 'white', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ margin: 0, marginBottom: '12px' }}>Consultar Propriedade & Simular Balance</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', marginBottom: '12px' }}>
+                <input type="text" placeholder="Property ID (u128)" value={queryId} onChange={(e) => setQueryId(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <button onClick={handleQueryProperty} disabled={isReadLoading} style={{ padding: '10px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Buscar</button>
+              </div>
+              {queried && (
+                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                  <div><strong>ID:</strong> {(queried.id as bigint).toString?.() ?? String(queried.id)}</div>
+                  <div><strong>Nome:</strong> {queried.name}</div>
+                  <div><strong>Builder:</strong> {queried.builder}</div>
+                  <div><strong>Total supply:</strong> {(queried.total_supply as bigint).toString?.() ?? String(queried.total_supply)}</div>
+                  <div><strong>Ele quer:</strong> {(queried.ele_quer as bigint).toString?.() ?? String(queried.ele_quer)}</div>
+                  <div><strong>Ele tem:</strong> {(queried.ele_tem as bigint).toString?.() ?? String(queried.ele_tem)}</div>
+                </div>
+              )}
+              {queried && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                  <input type="number" placeholder="Investment (i128)" value={simInvestment} onChange={(e) => setSimInvestment(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                  <button onClick={handleSimulate} disabled={isReadLoading} style={{ padding: '10px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Simular</button>
+                </div>
+              )}
+              {simResult && (
+                <div style={{ marginTop: '10px', color: '#065f46' }}>Balance simulado: {simResult}</div>
+              )}
+            </div>
+
+            {/* Transferência */}
+            <div style={{ marginTop: '30px', background: 'white', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ margin: 0, marginBottom: '12px' }}>Transferir Propriedade</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                <input type="text" placeholder="Para (G...)" value={transferTo} onChange={(e) => setTransferTo(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <input type="text" placeholder="Property ID (u128)" value={transferPropId} onChange={(e) => setTransferPropId(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <input type="text" placeholder="Quantidade (i128)" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <button onClick={handleTransfer} disabled={isWriteLoading} style={{ padding: '10px 16px', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Transferir</button>
+                {txMessage && (
+                  <div style={{ color: txMessage.startsWith('Transferência enviada') ? '#065f46' : '#b91c1c' }}>
+                    {txMessage}
+                    {lastTransferHash && (
+                      <div style={{ marginTop: '8px' }}>
+                        <a href={`https://stellar.expert/explorer/testnet/tx/${lastTransferHash}`} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'underline' }}>
+                          Ver no Explorer →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
           </div>
         )}
 
         {activeTab === 'contratos' && (
           <div style={{ padding: '20px' }}>
             <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-              📋 Gestão de Contratos RWA
+              {t('company.contracts.title')}
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ 
-                backgroundColor: '#fef3c7', 
-                padding: '20px', 
-                borderRadius: '10px',
-                border: '2px solid #f59e0b'
-              }}>
-                <h3 style={{ color: '#92400e', marginBottom: '10px' }}>📊 Resumo Geral</h3>
-                <p style={{ margin: '5px 0', color: '#92400e' }}>
-                  <strong>Contratos Ativos:</strong> {activeContracts.length}
-                </p>
-                <p style={{ margin: '5px 0', color: '#92400e' }}>
-                  <strong>Contratos Finalizados:</strong> {completedContracts.length}
-                </p>
-                <p style={{ margin: '5px 0', color: '#92400e' }}>
-                  <strong>Lucro Total:</strong> ${totalProfit.toLocaleString()}
-                </p>
-              </div>
 
-              <div style={{ 
-                backgroundColor: '#dbeafe', 
-                padding: '20px', 
-                borderRadius: '10px',
-                border: '2px solid #3b82f6'
-              }}>
-                <h3 style={{ color: '#1e40af', marginBottom: '10px' }}>💰 Empréstimos</h3>
-                <p style={{ margin: '5px 0', color: '#1e40af' }}>
-                  <strong>Total Emprestado:</strong> ${totalInvested.toLocaleString()}
-                </p>
-                <p style={{ margin: '5px 0', color: '#1e40af' }}>
-                  <strong>Retorno Médio:</strong> {((totalProfit / totalInvested) * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
-
+            {/* Contratos Ativos com Valor Arrecadado */}
             <div style={{ marginBottom: '30px' }}>
               <h3 style={{ color: '#059669', marginBottom: '20px', fontSize: '1.5rem' }}>
-                🟢 Contratos Ativos
+                {t('company.contracts.active')}
               </h3>
-              {activeContracts.map(contract => (
-                <div key={contract.id} style={{ 
-                  backgroundColor: 'white', 
-                  padding: '20px', 
-                  borderRadius: '10px', 
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  marginBottom: '15px',
-                  border: '2px solid #10b981'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h4 style={{ color: '#333', margin: 0, fontSize: '1.2rem' }}>{contract.assetName}</h4>
-                    <span style={{ 
-                      backgroundColor: '#10b981', 
-                      color: 'white', 
-                      padding: '5px 10px', 
-                      borderRadius: '15px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
+              {activeContracts.map(contract => {
+                const solicitado = parseFloat(contract.loanAmount || '0');
+                const arrecadado = parseFloat(contract.totalInvested || '0');
+                const progresso = solicitado > 0 ? Math.min(100, Math.round((arrecadado / solicitado) * 100)) : 0;
+                return (
+                  <div key={contract.id} style={{ 
+                    backgroundColor: 'white', 
+                    padding: '20px', 
+                    borderRadius: '10px', 
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    marginBottom: '15px',
+                    border: '2px solid #10b981'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <h4 style={{ color: '#333', margin: 0, fontSize: '1.2rem' }}>{contract.assetName}</h4>
+                        <span style={{
+                          backgroundColor: '#10b981',
+                          color: 'white',
+                          padding: '5px 10px',
+                          borderRadius: '15px',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {t('status.active')}
+                        </span>
+                    </div>
+
+
+                    {/* Linha de KPIs */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px', marginBottom: '15px' }}>
+                      <div>
+                        <strong style={{ color: '#666' }}>{t('company.contracts.investors')}:</strong>
+                        <p style={{ margin: '5px 0', color: '#333' }}>{contract.investors}</p>
+                      </div>
+                      <div>
+                        <strong style={{ color: '#666' }}>{t('company.contracts.requested')}:</strong>
+                        <p style={{ margin: '5px 0', color: '#333' }}>${solicitado.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <strong style={{ color: '#666' }}>{t('company.contracts.raised')}:</strong>
+                        <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>${arrecadado.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <strong style={{ color: '#666' }}>{t('company.contracts.interest')}:</strong>
+                        <p style={{ margin: '5px 0', color: '#333' }}>{contract.interestRate}% a.a.</p>
+                      </div>
+                      <div>
+                        <strong style={{ color: '#666' }}>{t('company.contracts.maturity')}:</strong>
+                        <p style={{ margin: '5px 0', color: '#333' }}>{contract.dueDate}</p>
+                      </div>
+                    </div>
+
+                    {/* Barra de Progresso */}
+                    <div style={{ marginBottom: '10px', color: '#6b7280', fontSize: '14px' }}>
+                      {t('company.contracts.progress')}: {progresso}%
+                    </div>
+                    <div style={{ 
+                      width: '100%', 
+                      height: '16px', 
+                      backgroundColor: '#e5e7eb', 
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      marginBottom: '15px'
                     }}>
-                      ATIVO
-                    </span>
+                      <div style={{
+                        width: `${progresso}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
+                      }} />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}>
+                        {t('company.contracts.viewDetails')}
+                      </button>
+                      <button style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#8b5cf6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}>
+                        {t('company.contracts.closeOffer')}
+                      </button>
+                    </div>
                   </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
-                    <div>
-                      <strong style={{ color: '#666' }}>Emprestadores:</strong>
-                      <p style={{ margin: '5px 0', color: '#333' }}>{contract.investors}</p>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#666' }}>Valor do Empréstimo:</strong>
-                      <p style={{ margin: '5px 0', color: '#333' }}>${parseFloat(contract.currentValue).toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#666' }}>Juros Acumulados:</strong>
-                      <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>
-                        ${parseFloat(contract.profit).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#666' }}>Taxa de Juros:</strong>
-                      <p style={{ margin: '5px 0', color: '#333' }}>{contract.interestRate}% a.a.</p>
-                    </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}>
-                      📊 Ver Detalhes
-                    </button>
-                    <button style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#8b5cf6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}>
-                      ✏️ Editar Oferta
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
+            {/* Contratos Finalizados */}
             <div>
               <h3 style={{ color: '#6b7280', marginBottom: '20px', fontSize: '1.5rem' }}>
-                ✅ Contratos Finalizados
+                {t('company.contracts.completed')}
               </h3>
               {completedContracts.map(contract => (
                 <div key={contract.id} style={{ 
@@ -625,35 +1065,35 @@ function EmpresaDashboard() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                     <h4 style={{ color: '#333', margin: 0, fontSize: '1.2rem' }}>{contract.assetName}</h4>
-                    <span style={{ 
-                      backgroundColor: '#6b7280', 
-                      color: 'white', 
-                      padding: '5px 10px', 
+                    <span style={{
+                      backgroundColor: '#6b7280',
+                      color: 'white',
+                      padding: '5px 10px',
                       borderRadius: '15px',
                       fontSize: '12px',
                       fontWeight: 'bold'
                     }}>
-                      FINALIZADO
+                      {t('status.completed')}
                     </span>
                   </div>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
                     <div>
-                      <strong style={{ color: '#666' }}>Emprestadores:</strong>
+                      <strong style={{ color: '#666' }}>{t('company.contracts.investors')}:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>{contract.investors}</p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Valor Pago:</strong>
+                      <strong style={{ color: '#666' }}>{t('company.contracts.paidValue')}:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>${parseFloat(contract.currentValue).toLocaleString()}</p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Juros Pagos:</strong>
+                      <strong style={{ color: '#666' }}>{t('company.contracts.paidInterest')}:</strong>
                       <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>
                         ${parseFloat(contract.profit).toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Quitado em:</strong>
+                      <strong style={{ color: '#666' }}>{t('company.contracts.settledOn')}:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>{contract.completionDate}</p>
                     </div>
                   </div>
@@ -667,7 +1107,7 @@ function EmpresaDashboard() {
                     cursor: 'pointer',
                     fontSize: '14px'
                   }}>
-                    📊 Ver Relatório Final
+                    {t('status.finalReport')}
                   </button>
                 </div>
               ))}
@@ -675,202 +1115,15 @@ function EmpresaDashboard() {
           </div>
         )}
 
-        {activeTab === 'emprestimos' && (
-          <div style={{ padding: '20px' }}>
-            <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-              💰 Status dos Empréstimos RWA
-            </h2>
-
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '30px', 
-              borderRadius: '15px', 
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{ color: '#8b5cf6', marginBottom: '20px' }}>Selecionar Contrato para Visualizar</h3>
-              
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
-                  Contrato RWA:
-                </label>
-                <select style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}>
-                  <option value="">Selecione um contrato ativo</option>
-                  {activeContracts.map(contract => (
-                    <option key={contract.id} value={contract.id}>
-                      {contract.assetName} - ${parseFloat(contract.currentValue).toLocaleString()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '30px', 
-              borderRadius: '15px', 
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{ color: '#3b82f6', marginBottom: '20px' }}>Progresso da Arrecadação</h3>
-              
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#333' }}>Valor Solicitado:</span>
-                  <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>$500,000 USDC</span>
-                </div>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#333' }}>Valor Arrecadado:</span>
-                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>$350,000 USDC</span>
-                </div>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#333' }}>Progresso:</span>
-                  <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>70%</span>
-                </div>
-                
-                {/* Barra de Progresso */}
-                <div style={{ 
-                  width: '100%', 
-                  height: '20px', 
-                  backgroundColor: '#e5e7eb', 
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  marginBottom: '20px'
-                }}>
-                  <div style={{
-                    width: '70%',
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
-                    borderRadius: '10px',
-                    transition: 'width 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    70%
-                  </div>
-                </div>
-                
-              </div>
-            </div>
-
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '30px', 
-              borderRadius: '15px', 
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{ color: '#10b981', marginBottom: '20px' }}>Configurações do Empréstimo</h3>
-              
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Taxa de Juros Anual (%)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    placeholder="12.0"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-                
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Prazo do Empréstimo (meses)
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="24"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-
-            <button
-              style={{
-                width: '100%',
-                padding: '15px',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#3b82f6'}
-            >
-              💾 Atualizar Configurações
-            </button>
-          </div>
-        )}
+        {/* (Removido) Aba de empréstimos separada — agora integrada em Contratos */}
 
         {activeTab === 'metricas' && (
           <div style={{ padding: '20px' }}>
             <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-              📊 Métricas e Performance
+              {t('company.metrics.title')}
             </h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ 
-                backgroundColor: '#f0fdf4', 
-                padding: '25px', 
-                borderRadius: '15px',
-                border: '2px solid #22c55e',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>💰</div>
-                <h3 style={{ color: '#15803d', marginBottom: '10px' }}>Lucro Total</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#15803d', margin: 0 }}>
-                  ${totalProfit.toLocaleString()}
-                </p>
-              </div>
-
-              <div style={{ 
-                backgroundColor: '#fef3c7', 
-                padding: '25px', 
-                borderRadius: '15px',
-                border: '2px solid #f59e0b',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>📈</div>
-                <h3 style={{ color: '#92400e', marginBottom: '10px' }}>ROI Médio</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#92400e', margin: 0 }}>
-                  {((totalProfit / totalInvested) * 100).toFixed(1)}%
-                </p>
-              </div>
-
               <div style={{ 
                 backgroundColor: '#dbeafe', 
                 padding: '25px', 
@@ -879,7 +1132,7 @@ function EmpresaDashboard() {
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👥</div>
-                <h3 style={{ color: '#1e40af', marginBottom: '10px' }}>Total Investidores</h3>
+                <h3 style={{ color: '#1e40af', marginBottom: '10px' }}>{t('company.metrics.totalInvestors')}</h3>
                 <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>
                   {contracts.reduce((sum, c) => sum + c.investors, 0)}
                 </p>
@@ -893,7 +1146,7 @@ function EmpresaDashboard() {
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏗️</div>
-                <h3 style={{ color: '#6b21a8', marginBottom: '10px' }}>Projetos Ativos</h3>
+                <h3 style={{ color: '#6b21a8', marginBottom: '10px' }}>{t('company.metrics.activeProjects')}</h3>
                 <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#6b21a8', margin: 0 }}>
                   {activeContracts.length}
                 </p>
@@ -906,18 +1159,16 @@ function EmpresaDashboard() {
               borderRadius: '15px', 
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}>
-              <h3 style={{ color: '#333', marginBottom: '20px' }}>📋 Resumo por Projeto</h3>
+              <h3 style={{ color: '#333', marginBottom: '20px' }}>📋 {t('company.metrics.table.project')} Summary</h3>
               
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f8fafc' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Projeto</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Status</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Investidores</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Valor Atual</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>Lucro</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>ROI</th>
+                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>{t('company.metrics.table.project')}</th>
+                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>{t('company.metrics.table.status')}</th>
+                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>{t('company.metrics.table.investors')}</th>
+                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb' }}>{t('company.metrics.table.currentValue')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -933,17 +1184,11 @@ function EmpresaDashboard() {
                             backgroundColor: contract.status === 'active' ? '#dcfce7' : '#f3f4f6',
                             color: contract.status === 'active' ? '#166534' : '#374151'
                           }}>
-                            {contract.status === 'active' ? 'ATIVO' : 'FINALIZADO'}
+                            {contract.status === 'active' ? t('status.active') : t('status.completed')}
                           </span>
                         </td>
                         <td style={{ padding: '12px' }}>{contract.investors}</td>
                         <td style={{ padding: '12px' }}>${parseFloat(contract.currentValue).toLocaleString()}</td>
-                        <td style={{ padding: '12px', color: '#10b981', fontWeight: 'bold' }}>
-                          ${parseFloat(contract.profit).toLocaleString()}
-                        </td>
-                        <td style={{ padding: '12px' }}>
-                          {((parseFloat(contract.profit) / parseFloat(contract.totalInvested)) * 100).toFixed(1)}%
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -952,7 +1197,9 @@ function EmpresaDashboard() {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </main>
+
     </div>
   );
 }

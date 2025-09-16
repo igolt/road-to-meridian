@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { StellarUserType } from '../types';
+import type { StellarUserType } from '../types';
 
 interface UserTypeSelectorProps {
   onSelect: (userType: StellarUserType) => void;
