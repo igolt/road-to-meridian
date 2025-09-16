@@ -1,19 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SorobanProvider from './components/SorobanProvider';
 import EmpresaDashboard from './components/EmpresaDashboard';
 import InvestidorDashboard from './components/InvestidorDashboard';
+import { WalletMenu } from './components/WalletMenu';
 import { useI18n } from './i18n/index';
-import { useWallet } from './wallet/WalletProvider';
-import { useSorobanReact } from '@soroban-react/core';
+import { StellarPasskeyService, type StellarUser } from './services/StellarPasskeyService';
 
 type AppState = 'realyield' | 'empresa' | 'investidor';
 
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('realyield');
   const { t, toggleLocale } = useI18n();
-  const { connect, isConnecting } = useWallet();
-  const soroban = useSorobanReact();
-  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [currentUser, setCurrentUser] = useState<StellarUser | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSupported, setIsSupported] = useState(false);
+
+  const passkeyService = StellarPasskeyService.getInstance();
+
+  useEffect(() => {
+    // Verificar suporte ao Passkey e carregar usuário salvo
+    setIsSupported(passkeyService.isSupported());
+    const storedUser = passkeyService.loadStoredUser();
+    if (storedUser) {
+      setCurrentUser(storedUser);
+      setCurrentState(storedUser.segment);
+    }
+  }, []);
 
   // const connectWalletAndNavigate = async (targetState: 'empresa' | 'investidor') => {
   //   setIsConnecting(true);
@@ -36,33 +49,64 @@ function App() {
   // };
 
   const handleSelectEmpresa = async () => {
-    setConnectionError(null);
+    setIsAuthenticating(true);
+    setAuthError(null);
+
     try {
-      // Garante gesto do usuário para abrir popup
-      if (!soroban.address) {
-        await soroban.connect();
+      // Tentar conectar com carteira existente primeiro
+      let user = await passkeyService.connectWallet('empresa');
+
+      // Se não conseguir conectar, criar nova carteira
+      if (!user) {
+        user = await passkeyService.createWallet('empresa');
       }
-      setCurrentState('empresa');
-      // Sincroniza provider local sem bloquear navegação
-      connect().catch(() => {});
+
+      if (user) {
+        setCurrentUser(user);
+        setCurrentState('empresa');
+      } else {
+        setAuthError('Falha na autenticação com Passkey');
+      }
     } catch (error) {
-      setConnectionError('Falha ao conectar carteira. Verifique a extensão Freighter.');
+      console.error('Erro na autenticação:', error);
+      setAuthError('Erro na autenticação: ' + (error as Error).message);
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
   const handleSelectInvestidor = async () => {
-    setConnectionError(null);
+    setIsAuthenticating(true);
+    setAuthError(null);
+
     try {
-      // Garante gesto do usuário para abrir popup
-      if (!soroban.address) {
-        await soroban.connect();
+      // Tentar conectar com carteira existente primeiro
+      let user = await passkeyService.connectWallet('investidor');
+
+      // Se não conseguir conectar, criar nova carteira
+      if (!user) {
+        user = await passkeyService.createWallet('investidor');
       }
-      setCurrentState('investidor');
-      // Sincroniza provider local sem bloquear navegação
-      connect().catch(() => {});
+
+      if (user) {
+        setCurrentUser(user);
+        setCurrentState('investidor');
+      } else {
+        setAuthError('Falha na autenticação com Passkey');
+      }
     } catch (error) {
-      setConnectionError('Falha ao conectar carteira. Verifique a extensão Freighter.');
+      console.error('Erro na autenticação:', error);
+      setAuthError('Erro na autenticação: ' + (error as Error).message);
+    } finally {
+      setIsAuthenticating(false);
     }
+  };
+
+  const handleBackToRealYield = async () => {
+    await passkeyService.disconnect();
+    setCurrentUser(null);
+    setCurrentState('realyield');
+    setAuthError(null);
   };
 
   // const handleBackToRealYield = () => {
@@ -73,8 +117,137 @@ function App() {
   // App inteiro sob o provider para permitir conexão na landing
   return (
     <SorobanProvider>
-    {currentState === 'empresa' && <EmpresaDashboard />}
-    {currentState === 'investidor' && <InvestidorDashboard />}
+    {/* Wallet Menu fixo no topo para usuários autenticados */}
+    {currentUser && currentState !== 'realyield' && (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+        padding: '12px 20px',
+        boxShadow: '0 2px 20px rgba(0, 0, 0, 0.1)'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          {/* Logo e título */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              background: 'linear-gradient(135deg, #4C8BF5 0%, #8b5cf6 100%)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: 'white'
+            }}>
+              R
+            </div>
+            <div>
+              <h3 style={{
+                color: '#1f2937',
+                fontSize: '16px',
+                fontWeight: '700',
+                margin: 0
+              }}>
+                RealYield
+              </h3>
+              <p style={{
+                color: '#6b7280',
+                fontSize: '11px',
+                margin: 0
+              }}>
+                {currentUser.segment === 'empresa' ? 'Dashboard Empresa' : 'Dashboard Investidor'}
+              </p>
+            </div>
+          </div>
+
+          {/* Wallet Menu */}
+          <WalletMenu onDisconnect={handleBackToRealYield} />
+        </div>
+      </div>
+    )}
+
+    {/* Conteúdo principal com padding top quando há wallet menu */}
+    <div style={{ paddingTop: currentUser && currentState !== 'realyield' ? '80px' : '0' }}>
+    {currentState === 'empresa' && (
+      <EmpresaDashboard
+        onBack={handleBackToRealYield}
+        currentUser={currentUser}
+      />
+    )}
+    {currentState === 'investidor' && (
+      <InvestidorDashboard
+        onBack={handleBackToRealYield}
+        currentUser={currentUser}
+      />
+    )}
+    {isAuthenticating && (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        padding: '20px',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        <div style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          padding: '40px',
+          borderRadius: '20px',
+          textAlign: 'center',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          maxWidth: '500px',
+          width: '100%'
+        }}>
+          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🔐</div>
+          <h2 style={{ color: '#333', marginBottom: '20px', fontSize: '1.8rem' }}>
+            Autenticação com Passkey
+          </h2>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #3498db',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <p style={{ color: '#666', marginTop: '20px' }}>
+            {isSupported ? 'Aguarde a autenticação com Passkey...' : 'Navegador não suporta Passkey'}
+          </p>
+          {authError && (
+            <div style={{
+              backgroundColor: '#fee',
+              color: '#c33',
+              padding: '10px',
+              borderRadius: '5px',
+              marginTop: '15px',
+              fontSize: '14px'
+            }}>
+              {authError}
+            </div>
+          )}
+        </div>
+      </div>
+    )}
     {currentState === 'realyield' && (
     <div style={{
       minHeight: '100vh',
@@ -345,7 +518,7 @@ function App() {
               </div>
             </div>
 
-            <button onClick={handleSelectEmpresa} style={{
+            <button onClick={handleSelectEmpresa} disabled={isAuthenticating} style={{
               width: '100%',
               padding: '16px 24px',
               background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
@@ -354,11 +527,10 @@ function App() {
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: isConnecting ? 'not-allowed' : 'pointer',
+              cursor: isAuthenticating ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
               boxShadow: '0 8px 24px rgba(139, 92, 246, 0.4)'
             }}
-            disabled={isConnecting}
             onMouseOver={(e) => {
               const target = e.target as HTMLButtonElement;
               target.style.transform = 'translateY(-2px)';
@@ -370,7 +542,7 @@ function App() {
               target.style.boxShadow = '0 8px 24px rgba(139, 92, 246, 0.4)';
             }}
             >
-              {isConnecting ? 'Conectando...' : t('landing.company.button')}
+              {isAuthenticating ? 'Autenticando...' : t('landing.company.button')}
             </button>
           </div>
 
@@ -481,7 +653,7 @@ function App() {
               </div>
             </div>
 
-            <button onClick={handleSelectInvestidor} style={{
+            <button onClick={handleSelectInvestidor} disabled={isAuthenticating} style={{
               width: '100%',
               padding: '16px 24px',
               background: 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)',
@@ -490,11 +662,10 @@ function App() {
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: isConnecting ? 'not-allowed' : 'pointer',
+              cursor: isAuthenticating ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
               boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)'
             }}
-            disabled={isConnecting}
             onMouseOver={(e) => {
               const target = e.target as HTMLButtonElement;
               target.style.transform = 'translateY(-2px)';
@@ -506,12 +677,12 @@ function App() {
               target.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.4)';
             }}
             >
-              {isConnecting ? 'Conectando...' : t('landing.investor.button')}
+              {isAuthenticating ? 'Autenticando...' : t('landing.investor.button')}
             </button>
           </div>
         </div>
 
-        {connectionError && (
+        {authError && (
           <div style={{
             marginTop: '16px',
             color: '#f87171',
@@ -520,7 +691,7 @@ function App() {
             padding: '10px 14px',
             borderRadius: '10px'
           }}>
-            {connectionError}
+            {authError}
           </div>
         )}
 
@@ -576,6 +747,70 @@ function App() {
 
     </div>
     )}
+    </div>
+
+    {/* CSS Animations */}
+    <style>{`
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+    `}</style>
     </SorobanProvider>
   );
 }

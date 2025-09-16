@@ -8,6 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "setup": "node setup-contracts.js",
+    "server": "cd server && npm start",
+    "start": "concurrently \"npm run server\" \"npm run dev\"",
     "bindings": "stellar contract bindings typescript --rpc-url https://soroban-testnet.stellar.org --network-passphrase \"Test SDF Network ; September 2015\" --contract-id CAZ6XYLIPSTTBLN4SPKZJBOBN6GG52XXASQHQ5UXYEVG2EZ7O3X7HNOS --output-dir src/blockchain/lib"
   },
   "dependencies": {
@@ -40,6 +43,7 @@
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.14",
+    "concurrently": "^9.2.1",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

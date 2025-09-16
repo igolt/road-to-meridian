@@ -1,27 +1,17 @@
 import { Buffer } from "buffer";
-import { Address } from '@stellar/stellar-sdk';
 import {
   AssembledTransaction,
   Client as ContractClient,
-  ClientOptions as ContractClientOptions,
-  MethodOptions,
-  Result,
   Spec as ContractSpec,
 } from '@stellar/stellar-sdk/contract';
 import type {
-  u32,
-  i32,
-  u64,
-  i64,
+  ClientOptions as ContractClientOptions,
+  MethodOptions,
   u128,
   i128,
-  u256,
-  i256,
-  Option,
-  Typepoint,
-  Duration,
 } from '@stellar/stellar-sdk/contract';
-export * from '@stellar/stellar-sdk'
+
+// Exportações específicas do stellar-sdk para evitar problemas de interop
 export * as contract from '@stellar/stellar-sdk/contract'
 export * as rpc from '@stellar/stellar-sdk/rpc'
 
@@ -165,7 +155,7 @@ export class Client extends ContractClient {
   ): Promise<AssembledTransaction<T>> {
     return ContractClient.deploy(null, options)
   }
-  constructor(public readonly options: ContractClientOptions) {
+  constructor(options: ContractClientOptions) {
     super(
       new ContractSpec([ "AAAAAQAAAAAAAAAAAAAACFByb3BlcnR5AAAABgAAAAAAAAAHYnVpbGRlcgAAAAATAAAAAAAAAAhlbGVfcXVlcgAAAAsAAAAAAAAAB2VsZV90ZW0AAAAACwAAAAAAAAACaWQAAAAAAAoAAAAAAAAABG5hbWUAAAAQAAAAAAAAAAx0b3RhbF9zdXBwbHkAAAAL",
         "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAQAAAAAAAAAFYWRtaW4AAAAAAAATAAAAAA==",

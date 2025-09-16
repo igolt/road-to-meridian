@@ -57,31 +57,75 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({ onDisconnect }) => {
   if (!user) return null;
 
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
       {/* Botão do Menu */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-3 bg-white rounded-lg px-4 py-2 shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '12px 16px',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          fontSize: '14px'
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
       >
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-bold">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            background: user.segment === 'empresa' 
+              ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+              : 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px'
+          }}>
+            <span style={{ color: 'white', fontWeight: 'bold' }}>
               {user.segment === 'empresa' ? '🏢' : '💰'}
             </span>
           </div>
-          <div className="text-left">
-            <div className="text-sm font-medium text-gray-900">
+          <div style={{ textAlign: 'left' }}>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#1f2937',
+              margin: 0
+            }}>
               {user.displayName}
             </div>
-            <div className="text-xs text-gray-500">
+            <div style={{
+              fontSize: '12px',
+              color: '#6b7280',
+              margin: 0
+            }}>
               {isLoading ? 'Carregando...' : `${balance} USDC`}
             </div>
           </div>
         </div>
         <svg
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
+          style={{
+            width: '16px',
+            height: '16px',
+            color: '#9ca3af',
+            transition: 'transform 0.2s ease',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+          }}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -95,25 +139,66 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({ onDisconnect }) => {
         <>
           {/* Overlay para fechar o menu */}
           <div
-            className="fixed inset-0 z-10"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 10
+            }}
             onClick={() => setIsOpen(false)}
           />
           
           {/* Menu Dropdown */}
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-20">
+          <div style={{
+            position: 'absolute',
+            right: 0,
+            marginTop: '8px',
+            width: '320px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+            zIndex: 20
+          }}>
             {/* Header do Menu */}
-            <div className="px-4 py-3 border-b border-gray-100">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-lg">
+            <div style={{ 
+              padding: '16px',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  background: user.segment === 'empresa' 
+                    ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+                    : 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px'
+                }}>
+                  <span style={{ color: 'white' }}>
                     {user.segment === 'empresa' ? '🏢' : '💰'}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">
+                  <h3 style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    margin: 0,
+                    marginBottom: '2px'
+                  }}>
                     {user.name}
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p style={{
+                    fontSize: '12px',
+                    color: '#6b7280',
+                    margin: 0
+                  }}>
                     {user.segment === 'empresa' ? 'Conta Empresa' : 'Conta Investidor'}
                   </p>
                 </div>
@@ -121,17 +206,46 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({ onDisconnect }) => {
             </div>
 
             {/* Saldo da Carteira */}
-            <div className="px-4 py-3 border-b border-gray-100">
-              <div className="flex items-center justify-between">
+            <div style={{ 
+              padding: '16px',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Saldo Total</p>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p style={{
+                    fontSize: '11px',
+                    color: '#6b7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    margin: 0,
+                    marginBottom: '4px'
+                  }}>
+                    Saldo Total
+                  </p>
+                  <p style={{
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    color: '#1f2937',
+                    margin: 0
+                  }}>
                     {isLoading ? 'Carregando...' : `${balance} USDC`}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">Valor em BRL</p>
-                  <p className="text-sm font-medium text-gray-700">
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{
+                    fontSize: '11px',
+                    color: '#6b7280',
+                    margin: 0,
+                    marginBottom: '4px'
+                  }}>
+                    Valor em BRL
+                  </p>
+                  <p style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#374151',
+                    margin: 0
+                  }}>
                     {isLoading ? '...' : 'R$ 6.250,25'}
                   </p>
                 </div>
@@ -139,23 +253,47 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({ onDisconnect }) => {
             </div>
 
             {/* Informações da Carteira */}
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <div style={{ 
+              padding: '16px',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+            }}>
+              <h4 style={{
+                fontSize: '11px',
+                fontWeight: '600',
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                margin: 0,
+                marginBottom: '12px'
+              }}>
                 Informações da Carteira
               </h4>
               
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Endereço:</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-mono text-gray-900">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '14px', color: '#4b5563' }}>Endereço:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{
+                      fontSize: '14px',
+                      fontFamily: 'monospace',
+                      color: '#1f2937'
+                    }}>
                       {formatAddress(user.contractAddress || '')}
                     </span>
                     <button
                       onClick={() => copyToClipboard(user.contractAddress || '', 'Endereço')}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      style={{
+                        color: '#9ca3af',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px',
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.color = '#4b5563'}
+                      onMouseOut={(e) => e.currentTarget.style.color = '#9ca3af'}
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                     </button>
@@ -163,17 +301,30 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({ onDisconnect }) => {
                 </div>
                 
                 {user.keyIdBase64 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Key ID:</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-mono text-gray-900">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '14px', color: '#4b5563' }}>Key ID:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        fontSize: '14px',
+                        fontFamily: 'monospace',
+                        color: '#1f2937'
+                      }}>
                         {formatAddress(user.keyIdBase64)}
                       </span>
                       <button
                         onClick={() => copyToClipboard(user.keyIdBase64 || '', 'Key ID')}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        style={{
+                          color: '#9ca3af',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '2px',
+                          transition: 'color 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.color = '#4b5563'}
+                        onMouseOut={(e) => e.currentTarget.style.color = '#9ca3af'}
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                       </button>
@@ -184,16 +335,31 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({ onDisconnect }) => {
             </div>
 
             {/* Ações */}
-            <div className="px-4 py-3">
-              <div className="space-y-2">
+            <div style={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <button
                   onClick={() => {
                     // Aqui você pode implementar a funcionalidade de ver detalhes
                     console.log('Ver detalhes da carteira');
                   }}
-                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>Ver Detalhes da Carteira</span>
@@ -204,22 +370,56 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({ onDisconnect }) => {
                     // Aqui você pode implementar a funcionalidade de configurações
                     console.log('Configurações da carteira');
                   }}
-                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <span>Configurações</span>
                 </button>
                 
-                <hr className="my-2" />
+                <hr style={{ 
+                  margin: '8px 0',
+                  border: 'none',
+                  borderTop: '1px solid rgba(0, 0, 0, 0.06)'
+                }} />
                 
                 <button
                   onClick={handleDisconnect}
-                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    color: '#dc2626',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
                   <span>Desconectar</span>

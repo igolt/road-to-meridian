@@ -32,6 +32,12 @@ export class StellarPasskeyService {
   async initialize(): Promise<boolean> {
     try {
       console.log('🔧 Iniciando configuração do PasskeyKit...');
+      console.log('🔍 Variáveis de ambiente:', {
+        RPC_URL: ENV.RPC_URL,
+        NETWORK_PASSPHRASE: ENV.NETWORK_PASSPHRASE,
+        WALLET_WASM_HASH: ENV.WALLET_WASM_HASH || '❌ AUSENTE',
+        WALLET_WASM_HASH_LENGTH: ENV.WALLET_WASM_HASH?.length || 0
+      });
       
       if (!validateEnvironment()) {
         console.error('❌ Configurações de ambiente inválidas');

@@ -4,6 +4,12 @@ import { useI18n } from '../i18n/index';
 import { useContractWrite } from '@/blockchain/hooks/useContractWrite';
 import { useSorobanReact } from '@soroban-react/core';
 import { useContractRead } from '@/blockchain/hooks/useContractRead';
+import type { StellarUser } from '../services/StellarPasskeyService';
+
+interface EmpresaDashboardProps {
+  onBack: () => void;
+  currentUser: StellarUser | null;
+}
 
 interface RWAFormData {
   assetName: string;
@@ -42,7 +48,7 @@ interface Contract {
 
 type DashboardTab = 'emissao' | 'contratos' | 'metricas';
 
-function EmpresaDashboard() {
+function EmpresaDashboard({ onBack, currentUser }: EmpresaDashboardProps) {
   const { address, network, isInstalled, isConnecting, connect, disconnect } = useWallet();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emissao');
@@ -245,7 +251,7 @@ function EmpresaDashboard() {
   };
 
   const handleBackToRealYield = () => {
-    window.location.reload();
+    onBack();
   };
 
   const handleQueryProperty = async () => {
@@ -459,10 +465,66 @@ function EmpresaDashboard() {
         </div>
       </header>
 
+      {/* User Info */}
+      {currentUser && (
+        <div style={{
+          position: 'absolute',
+          top: '120px',
+          left: '40px',
+          right: '40px',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '12px',
+          padding: '12px 20px',
+          boxShadow: '0 10px 30px rgba(139, 92, 246, 0.1)',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          zIndex: 10
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: 'white'
+              }}>
+                🏢
+              </div>
+              <div>
+                <div style={{ color: 'white', fontSize: '14px', fontWeight: '600' }}>
+                  {currentUser.displayName}
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+                  Passkey autenticado
+                </div>
+              </div>
+            </div>
+            {currentUser.contractAddress && (
+              <div style={{
+                color: 'rgba(255,255,255,0.8)',
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                padding: '4px 8px',
+                borderRadius: '6px'
+              }}>
+                {currentUser.contractAddress.substring(0, 8)}...{currentUser.contractAddress.substring(-6)}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Navigation Tabs */}
       <div style={{
         position: 'absolute',
-        top: '80px',
+        top: currentUser ? '190px' : '80px',
         left: '40px',
         right: '40px',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
