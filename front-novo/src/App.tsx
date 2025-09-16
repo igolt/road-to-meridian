@@ -1,29 +1,86 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { StellarPasskeyService, type StellarUser } from './services/StellarPasskeyService';
 
 type AppState = 'realyild' | 'empresa' | 'investidor';
 
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('realyild');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [currentUser, setCurrentUser] = useState<StellarUser | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSupported, setIsSupported] = useState(false);
+
+  const passkeyService = StellarPasskeyService.getInstance();
+
+  useEffect(() => {
+    // Verificar suporte ao Passkey e carregar usuário salvo
+    setIsSupported(passkeyService.isSupported());
+    const storedUser = passkeyService.loadStoredUser();
+    if (storedUser) {
+      setCurrentUser(storedUser);
+      setCurrentState(storedUser.segment);
+    }
+  }, []);
 
   const handleSelectEmpresa = async () => {
     setIsAuthenticating(true);
-    // Simular autenticação
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setCurrentState('empresa');
-    setIsAuthenticating(false);
+    setAuthError(null);
+    
+    try {
+      // Tentar conectar com carteira existente primeiro
+      let user = await passkeyService.connectWallet('empresa');
+      
+      // Se não conseguir conectar, criar nova carteira
+      if (!user) {
+        user = await passkeyService.createWallet('empresa');
+      }
+      
+      if (user) {
+        setCurrentUser(user);
+        setCurrentState('empresa');
+      } else {
+        setAuthError('Falha na autenticação com Passkey');
+      }
+    } catch (error) {
+      console.error('Erro na autenticação:', error);
+      setAuthError('Erro na autenticação: ' + (error as Error).message);
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   const handleSelectInvestidor = async () => {
     setIsAuthenticating(true);
-    // Simular autenticação
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setCurrentState('investidor');
-    setIsAuthenticating(false);
+    setAuthError(null);
+    
+    try {
+      // Tentar conectar com carteira existente primeiro
+      let user = await passkeyService.connectWallet('investidor');
+      
+      // Se não conseguir conectar, criar nova carteira
+      if (!user) {
+        user = await passkeyService.createWallet('investidor');
+      }
+      
+      if (user) {
+        setCurrentUser(user);
+        setCurrentState('investidor');
+      } else {
+        setAuthError('Falha na autenticação com Passkey');
+      }
+    } catch (error) {
+      console.error('Erro na autenticação:', error);
+      setAuthError('Erro na autenticação: ' + (error as Error).message);
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
-  const handleBackToRealYild = () => {
+  const handleBackToRealYild = async () => {
+    await passkeyService.disconnect();
+    setCurrentUser(null);
     setCurrentState('realyild');
+    setAuthError(null);
   };
 
   if (currentState === 'empresa') {
@@ -49,7 +106,31 @@ function App() {
           ← Voltar para RealYild
         </button>
         <h1 style={{ color: '#333', marginBottom: '20px' }}>Dashboard Empresa</h1>
-        <p style={{ color: '#666' }}>Gerencie seus tokens de imóveis</p>
+        <p style={{ color: '#666', marginBottom: '20px' }}>Gerencie seus tokens de imóveis</p>
+        {currentUser && (
+          <div style={{ 
+            backgroundColor: '#f8f9fa', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            marginBottom: '20px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ color: '#333', marginBottom: '10px' }}>Informações da Carteira</h3>
+            <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
+              <strong>Nome:</strong> {currentUser.name}
+            </p>
+            {currentUser.publicKey && (
+              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
+                <strong>Chave Pública:</strong> {currentUser.publicKey.substring(0, 20)}...
+              </p>
+            )}
+            {currentUser.contractAddress && (
+              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
+                <strong>Contrato:</strong> {currentUser.contractAddress.substring(0, 20)}...
+              </p>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -77,7 +158,31 @@ function App() {
           ← Voltar para RealYild
         </button>
         <h1 style={{ color: '#333', marginBottom: '20px' }}>Dashboard Investidor</h1>
-        <p style={{ color: '#666' }}>Gerencie seus investimentos em tokens de imóveis</p>
+        <p style={{ color: '#666', marginBottom: '20px' }}>Gerencie seus investimentos em tokens de imóveis</p>
+        {currentUser && (
+          <div style={{ 
+            backgroundColor: '#f8f9fa', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            marginBottom: '20px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ color: '#333', marginBottom: '10px' }}>Informações da Carteira</h3>
+            <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
+              <strong>Nome:</strong> {currentUser.name}
+            </p>
+            {currentUser.publicKey && (
+              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
+                <strong>Chave Pública:</strong> {currentUser.publicKey.substring(0, 20)}...
+              </p>
+            )}
+            {currentUser.contractAddress && (
+              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
+                <strong>Contrato:</strong> {currentUser.contractAddress.substring(0, 20)}...
+              </p>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -109,8 +214,20 @@ function App() {
           </h2>
           <div className="spinner"></div>
           <p style={{ color: '#666', marginTop: '20px' }}>
-            Aguarde a autenticação...
+            {isSupported ? 'Aguarde a autenticação com Passkey...' : 'Navegador não suporta Passkey'}
           </p>
+          {authError && (
+            <div style={{ 
+              backgroundColor: '#fee', 
+              color: '#c33', 
+              padding: '10px', 
+              borderRadius: '5px', 
+              marginTop: '15px',
+              fontSize: '14px'
+            }}>
+              {authError}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -172,8 +289,8 @@ function App() {
             minWidth: '200px',
             transition: 'transform 0.2s'
           }}
-          onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-          onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          onMouseOver={(e) => (e.target as HTMLElement).style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => (e.target as HTMLElement).style.transform = 'translateY(0)'}
         >
           <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🏢</div>
           <div>Empresa</div>
@@ -198,8 +315,8 @@ function App() {
             minWidth: '200px',
             transition: 'transform 0.2s'
           }}
-          onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-          onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          onMouseOver={(e) => (e.target as HTMLElement).style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => (e.target as HTMLElement).style.transform = 'translateY(0)'}
         >
           <div style={{ fontSize: '2rem', marginBottom: '10px' }}>💰</div>
           <div>Investidor</div>

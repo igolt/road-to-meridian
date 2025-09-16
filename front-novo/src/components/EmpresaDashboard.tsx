@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { StellarService } from '../services/StellarService';
-import { StellarTokenConfig } from '../types';
+import type { StellarTokenConfig } from '../types';
 
 interface EmpresaDashboardProps {
   onBack: () => void;

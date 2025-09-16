@@ -1,4 +1,4 @@
-import { StellarTokenConfig, StellarNetwork, StellarAccount, StellarTransaction } from '../types';
+import type { StellarTokenConfig, StellarNetwork, StellarAccount, StellarTransaction } from '../types';
 
 // Configurações das redes Stellar
 export const STELLAR_NETWORKS: Record<string, StellarNetwork> = {
@@ -73,7 +73,7 @@ export class StellarService {
   /**
    * Cria um novo token de imóvel
    */
-  async createRealEstateToken(config: StellarTokenConfig): Promise<StellarTransaction> {
+  async createRealEstateToken(_config: StellarTokenConfig): Promise<StellarTransaction> {
     if (!this.currentAccount) {
       throw new Error('Carteira não conectada');
     }
@@ -123,7 +123,7 @@ export class StellarService {
   /**
    * Transfere tokens
    */
-  async transferTokens(destination: string, amount: number, assetCode: string): Promise<StellarTransaction> {
+  async transferTokens(_destination: string, _amount: number, _assetCode: string): Promise<StellarTransaction> {
     if (!this.currentAccount) {
       throw new Error('Carteira não conectada');
     }
