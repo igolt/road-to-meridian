@@ -1,6 +1,7 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, Address, Env, Map, String, panic_with_error};
-use soroban_sdk::token::Interface as TokenInterface;
+use soroban_sdk::{
+    contract, contractimpl, contracttype, panic_with_error, Address, Bytes, Env, Map, String,
+};
 
 #[contract]
 pub struct RealEstateTokenContract;
@@ -11,7 +12,6 @@ pub enum Error {
     InsufficientBalance,
     PropertyExists,
     InvalidProperty,
-    InvalidAmount,
 }
 
 impl From<Error> for soroban_sdk::Error {
@@ -21,168 +21,171 @@ impl From<Error> for soroban_sdk::Error {
             Error::InsufficientBalance => soroban_sdk::Error::from_contract_error(1002),
             Error::PropertyExists => soroban_sdk::Error::from_contract_error(1003),
             Error::InvalidProperty => soroban_sdk::Error::from_contract_error(1004),
-            Error::InvalidAmount => soroban_sdk::Error::from_contract_error(1005),
         }
     }
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Property {
+    pub id: u128,
+    pub builder: Address,
+    pub name: String,
+    pub ele_quer: i128,
+    pub ele_tem: i128,
+    pub total_supply: i128,
 }
 
 #[contractimpl]
 impl RealEstateTokenContract {
-    /// Initialize the contract with admin and token details
-    pub fn initialize(e: Env, admin: Address, name: String, symbol: String, decimal: u32, total_supply: i128) {
-        e.storage().instance().set(&"admin", &admin);
-        e.storage().instance().set(&"name", &name);
-        e.storage().instance().set(&"symbol", &symbol);
-        e.storage().instance().set(&"decimal", &decimal);
-        e.storage().instance().set(&"total_supply", &total_supply);
-        
-        // Initialize admin balance with total supply
-        let mut balances: Map<Address, i128> = Map::new(&e);
-        balances.set(admin.clone(), total_supply);
-        e.storage().instance().set(&"balances", &balances);
-        
-        // Initialize protocol fee settings (default 0%)
-        e.storage().instance().set(&"protocol_fee_bps", &0u32);
-        e.storage().instance().set(&"fee_wallet", &admin);
+    pub fn initialize(env: Env, admin: Address) {
+        env.storage().instance().set(&"admin", &admin);
+        env.storage().instance().set(&"next_property_id", &1u128);
     }
 
-    /// Transfer tokens with protocol fee
-    pub fn transfer_with_fee(
-        e: Env,
+    fn get_properties_storage(env: &Env) -> Map<u128, Property> {
+        env.storage()
+            .instance()
+            .get(&"properties")
+            .unwrap_or(Map::new(env))
+    }
+
+    pub fn register_property(
+        env: Env,
+        builder: Address,
+        property_name: String,
+        ele_quer: i128,
+        ele_tem: i128,
+        total_supply: i128,
+    ) -> u128 {
+        builder.require_auth();
+        Self::_verify_builder(&env, &builder);
+
+        let next_id: u128 = env
+            .storage()
+            .instance()
+            .get(&"next_property_id")
+            .unwrap();
+
+        let property = Property {
+            id: next_id,
+            builder: builder.clone(),
+            name: property_name.clone(),
+            ele_quer,
+            ele_tem,
+            total_supply,
+        };
+
+        let mut properties = Self::get_properties_storage(&env);
+        properties.set(next_id, property);
+        env.storage().instance().set(&"properties", &properties);
+
+        let mut property_info: Map<u128, (String, i128, Address)> = env
+            .storage()
+            .instance()
+            .get(&"property_info")
+            .unwrap_or(Map::new(&env));
+        property_info.set(next_id, (property_name.clone(), total_supply, builder.clone()));
+        env.storage().instance().set(&"property_info", &property_info);
+
+        let mut balances: Map<(Address, u128), i128> = env
+            .storage()
+            .instance()
+            .get(&"balances")
+            .unwrap_or(Map::new(&env));
+        balances.set((builder.clone(), next_id), total_supply);
+        env.storage().instance().set(&"balances", &balances);
+
+        env.storage()
+            .instance()
+            .set(&"next_property_id", &(next_id + 1));
+
+        env.events().publish(
+            ("property_registered", next_id),
+            (builder, property_name, total_supply),
+        );
+
+        next_id
+    }
+
+    pub fn get_property(env: Env, property_id: u128) -> (String, i128, Address, Property) {
+        let property_info: Map<u128, (String, i128, Address)> = env
+            .storage()
+            .instance()
+            .get(&"property_info")
+            .unwrap_or(Map::new(&env));
+
+        let properties: Map<u128, Property> = env
+            .storage()
+            .instance()
+            .get(&"properties")
+            .unwrap_or(Map::new(&env));
+
+        let (name, supply, builder) = property_info
+            .get(property_id)
+            .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
+        let metadata = properties
+            .get(property_id)
+            .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
+
+        (name, supply, builder, metadata)
+    }
+
+    pub fn transfer_property(
+        env: Env,
         from: Address,
         to: Address,
+        property_id: u128,
         amount: i128,
     ) {
         from.require_auth();
-        
-        if amount <= 0 {
-            panic_with_error!(&e, Error::InvalidAmount);
-        }
 
-        let protocol_fee_bps: u32 = e.storage().instance().get(&"protocol_fee_bps").unwrap_or(0);
-        let fee_wallet: Address = e.storage().instance().get(&"fee_wallet").unwrap();
-        
-        // Calculate protocol fee
+        let protocol_fee_bps: u32 = env.storage().instance().get(&"protocol_fee_bps").unwrap_or(0);
+        let fee_wallet: Address = env
+            .storage()
+            .instance()
+            .get(&"fee_wallet")
+            .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
+
         let fee_amount = (amount * protocol_fee_bps as i128) / 10000;
         let net_amount = amount - fee_amount;
 
-        let mut balances: Map<Address, i128> = e.storage().instance().get(&"balances").unwrap();
+        let mut balances: Map<(Address, u128), i128> = env
+            .storage()
+            .instance()
+            .get(&"balances")
+            .unwrap_or(Map::new(&env));
 
-        // Check and update sender balance
-        let from_balance = balances.get(from.clone()).unwrap_or(0);
+        let from_balance = balances.get((from.clone(), property_id)).unwrap_or(0);
         if from_balance < amount {
-            panic_with_error!(&e, Error::InsufficientBalance);
+            panic_with_error!(&env, Error::InsufficientBalance);
         }
-        balances.set(from.clone(), from_balance - amount);
+        balances.set((from.clone(), property_id), from_balance - amount);
 
-        // Apply protocol fee
         if fee_amount > 0 {
-            let fee_balance = balances.get(fee_wallet.clone()).unwrap_or(0);
-            balances.set(fee_wallet.clone(), fee_balance + fee_amount);
+            let fee_balance = balances.get((fee_wallet.clone(), property_id)).unwrap_or(0);
+            balances.set((fee_wallet.clone(), property_id), fee_balance + fee_amount);
         }
 
-        // Update receiver balance
-        let to_balance = balances.get(to.clone()).unwrap_or(0);
-        balances.set(to.clone(), to_balance + net_amount);
+        let to_balance = balances.get((to.clone(), property_id)).unwrap_or(0);
+        balances.set((to.clone(), property_id), to_balance + net_amount);
 
-        e.storage().instance().set(&"balances", &balances);
+        env.storage().instance().set(&"balances", &balances);
 
-        e.events().publish(
-            ("transfer",),
+        env.events().publish(
+            ("property_transfer", property_id),
             (from, to, amount, fee_amount),
         );
     }
 
-    /// Get balance of an address
-    pub fn get_balance(e: Env, owner: Address) -> i128 {
-        let balances: Map<Address, i128> = e.storage().instance().get(&"balances").unwrap();
-        balances.get(owner).unwrap_or(0)
-    }
-
-    /// Get total supply
-    pub fn get_total_supply(e: Env) -> i128 {
-        e.storage().instance().get(&"total_supply").unwrap()
-    }
-
-    /// Get token metadata
-    pub fn get_metadata(e: Env) -> (String, String, u32) {
-        let name: String = e.storage().instance().get(&"name").unwrap();
-        let symbol: String = e.storage().instance().get(&"symbol").unwrap();
-        let decimal: u32 = e.storage().instance().get(&"decimal").unwrap();
-        (name, symbol, decimal)
-    }
-
-    /// Set protocol fee (admin only)
-    pub fn set_protocol_fee(e: Env, admin: Address, fee_bps: u32, fee_wallet: Address) {
-        admin.require_auth();
-        
-        let stored_admin: Address = e.storage().instance().get(&"admin").unwrap();
-        if admin != stored_admin {
-            panic_with_error!(&e, Error::Unauthorized);
+    fn _verify_builder(env: &Env, builder: &Address) {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&"admin")
+            .unwrap_or_else(|| panic_with_error!(env, Error::InvalidProperty));
+        if *builder != admin {
+            panic_with_error!(env, Error::Unauthorized);
         }
-
-        if fee_bps > 1000 { // Max 10% fee
-            panic_with_error!(&e, Error::InvalidAmount);
-        }
-
-        e.storage().instance().set(&"protocol_fee_bps", &fee_bps);
-        e.storage().instance().set(&"fee_wallet", &fee_wallet);
-
-        e.events().publish(
-            ("protocol_fee_updated",),
-            (fee_bps, fee_wallet),
-        );
-    }
-}
-
-// Implementação CORRETA da interface de token padrão
-#[contractimpl]
-impl TokenInterface for RealEstateTokenContract {
-    fn allowance(_e: Env, _from: Address, _spender: Address) -> i128 {
-        // Não implementado - retorna 0 (sem allowance)
-        0
-    }
-
-    fn approve(_e: Env, _from: Address, _spender: Address, _amount: i128, _expiration_ledger: u32) {
-        // Não implementado neste contrato
-        panic_with_error!(&_e, Error::Unauthorized);
-    }
-
-    fn balance(e: Env, id: Address) -> i128 {
-        RealEstateTokenContract::get_balance(e, id)
-    }
-
-    fn transfer(e: Env, from: Address, to: Address, amount: i128) {
-        RealEstateTokenContract::transfer_with_fee(e, from, to, amount);
-    }
-
-    fn transfer_from(_e: Env, _spender: Address, _from: Address, _to: Address, _amount: i128) {
-        // Não implementado
-        panic_with_error!(&_e, Error::Unauthorized);
-    }
-
-    fn burn(_e: Env, _from: Address, _amount: i128) {
-        // Não implementado
-        panic_with_error!(&_e, Error::Unauthorized);
-    }
-
-    fn burn_from(_e: Env, _spender: Address, _from: Address, _amount: i128) {
-        // Não implementado
-        panic_with_error!(&_e, Error::Unauthorized);
-    }
-
-    fn decimals(e: Env) -> u32 {
-        let decimal: u32 = e.storage().instance().get(&"decimal").unwrap();
-        decimal
-    }
-
-    fn name(e: Env) -> String {
-        let name: String = e.storage().instance().get(&"name").unwrap();
-        name
-    }
-
-    fn symbol(e: Env) -> String {
-        let symbol: String = e.storage().instance().get(&"symbol").unwrap();
-        symbol
     }
 }
