@@ -50,6 +50,7 @@ impl RealEstateTokenContract {
             .unwrap_or(Map::new(env))
     }
 
+
     pub fn register_property(
         env: Env,
         builder: Address,
@@ -100,13 +101,14 @@ impl RealEstateTokenContract {
         next_id
     }
 
-    pub fn get_property(env: Env, property_id: u128) -> (String, i128, Address) {
-        let properties = Self::get_properties_storage(&env);
+    pub fn get_property(env: Env, property_id: u128) -> Property {
+        let properties: Map<u128, Property> = Self::get_properties_storage(&env);
         let property = properties
             .get(property_id)
             .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
-        (property.name, property.total_supply, property.builder)
+        property
     }
+    
 
     pub fn transfer_property(
         env: Env,
@@ -159,6 +161,11 @@ impl RealEstateTokenContract {
             ("property_transferred", property_id),
             (from, to, amount),
         );
+    }
+
+    pub fn balance(investment: i128, property: Property) -> i128{
+        let price: i128 = property.ele_quer/property.total_supply;
+        investment/price
     }
 
     fn _verify_builder(env: &Env, builder: &Address) {
