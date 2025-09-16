@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSorobanReact } from '@soroban-react/core';
+import { useState } from 'react';
+// import { useSorobanReact } from '@soroban-react/core';
 import EmpresaDashboard from './components/EmpresaDashboard';
 import InvestidorDashboard from './components/InvestidorDashboard';
 
@@ -7,42 +7,44 @@ type AppState = 'realyield' | 'empresa' | 'investidor';
 
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('realyield');
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const sorobanContext = useSorobanReact();
+  // const [isConnecting, setIsConnecting] = useState(false);
+  // const [connectionError, setConnectionError] = useState<string | null>(null);
+  // const sorobanContext = useSorobanReact();
 
-  const connectWalletAndNavigate = async (targetState: 'empresa' | 'investidor') => {
-    setIsConnecting(true);
-    setConnectionError(null);
-    
-    try {
-      // Conectar à carteira se não estiver conectada
-      if (!sorobanContext.address) {
-        await sorobanContext.connect();
-      }
-      
-      // Navegar para o dashboard correspondente
-      setCurrentState(targetState);
-    } catch (error) {
-      console.error('Erro ao conectar carteira:', error);
-      setConnectionError('Erro ao conectar carteira. Verifique se a extensão Freighter está instalada.');
-    } finally {
-      setIsConnecting(false);
-    }
-  };
+  // const connectWalletAndNavigate = async (targetState: 'empresa' | 'investidor') => {
+  //   setIsConnecting(true);
+  //   setConnectionError(null);
+  //   
+  //   try {
+  //     // Conectar à carteira se não estiver conectada
+  //     if (!sorobanContext.address) {
+  //       await sorobanContext.connect();
+  //     }
+  //     
+  //     // Navegar para o dashboard correspondente
+  //     setCurrentState(targetState);
+  //   } catch (error) {
+  //     console.error('Erro ao conectar carteira:', error);
+  //     setConnectionError('Erro ao conectar carteira. Verifique se a extensão Freighter está instalada.');
+  //   } finally {
+  //     setIsConnecting(false);
+  //   }
+  // };
 
   const handleSelectEmpresa = () => {
-    connectWalletAndNavigate('empresa');
+    // connectWalletAndNavigate('empresa');
+    setCurrentState('empresa');
   };
 
   const handleSelectInvestidor = () => {
-    connectWalletAndNavigate('investidor');
+    // connectWalletAndNavigate('investidor');
+    setCurrentState('investidor');
   };
 
-  const handleBackToRealYield = () => {
-    setCurrentState('realyield');
-    setConnectionError(null);
-  };
+  // const handleBackToRealYield = () => {
+  //   setCurrentState('realyield');
+  //   // setConnectionError(null);
+  // };
 
   if (currentState === 'empresa') {
     return <EmpresaDashboard />;
@@ -94,15 +96,15 @@ function App() {
       }}>
         <button 
           onClick={handleSelectEmpresa}
-          disabled={isConnecting}
+          // disabled={isConnecting}
           style={{
             padding: '20px 40px',
-            backgroundColor: isConnecting ? '#9ca3af' : '#8b5cf6',
+            backgroundColor: '#8b5cf6', // isConnecting ? '#9ca3af' : '#8b5cf6',
             color: 'white',
             border: 'none',
             borderRadius: '12px',
             fontSize: '18px',
-            cursor: isConnecting ? 'not-allowed' : 'pointer',
+            cursor: 'pointer', // isConnecting ? 'not-allowed' : 'pointer',
             fontWeight: 'bold',
             boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
             flex: '1',
@@ -110,32 +112,32 @@ function App() {
             transition: 'transform 0.2s'
           }}
           onMouseOver={(e) => {
-            if (!isConnecting) {
-              e.target.style.transform = 'translateY(-2px)';
-            }
+            // if (!isConnecting) {
+              (e.target as HTMLButtonElement).style.transform = 'translateY(-2px)';
+            // }
           }}
-          onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          onMouseOut={(e) => (e.target as HTMLButtonElement).style.transform = 'translateY(0)'}
         >
           <div style={{ fontSize: '2rem', marginBottom: '10px' }}>
-            {isConnecting ? '🔄' : '🏢'}
+            🏢 {/* {isConnecting ? '🔄' : '🏢'} */}
           </div>
-          <div>{isConnecting ? 'Conectando...' : 'Empresa'}</div>
+          <div>Empresa</div> {/* {isConnecting ? 'Conectando...' : 'Empresa'} */}
           <div style={{ fontSize: '14px', opacity: 0.9, marginTop: '5px' }}>
-            {isConnecting ? 'Aguarde...' : 'Tokenize seus imóveis'}
+            Tokenize seus imóveis {/* {isConnecting ? 'Aguarde...' : 'Tokenize seus imóveis'} */}
           </div>
         </button>
         
         <button 
           onClick={handleSelectInvestidor}
-          disabled={isConnecting}
+          // disabled={isConnecting}
           style={{
             padding: '20px 40px',
-            backgroundColor: isConnecting ? '#9ca3af' : '#3b82f6',
+            backgroundColor: '#3b82f6', // isConnecting ? '#9ca3af' : '#3b82f6',
             color: 'white',
             border: 'none',
             borderRadius: '12px',
             fontSize: '18px',
-            cursor: isConnecting ? 'not-allowed' : 'pointer',
+            cursor: 'pointer', // isConnecting ? 'not-allowed' : 'pointer',
             fontWeight: 'bold',
             boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
             flex: '1',
@@ -143,24 +145,24 @@ function App() {
             transition: 'transform 0.2s'
           }}
           onMouseOver={(e) => {
-            if (!isConnecting) {
-              e.target.style.transform = 'translateY(-2px)';
-            }
+            // if (!isConnecting) {
+              (e.target as HTMLButtonElement).style.transform = 'translateY(-2px)';
+            // }
           }}
-          onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          onMouseOut={(e) => (e.target as HTMLButtonElement).style.transform = 'translateY(0)'}
         >
           <div style={{ fontSize: '2rem', marginBottom: '10px' }}>
-            {isConnecting ? '🔄' : '💰'}
+            💰 {/* {isConnecting ? '🔄' : '💰'} */}
           </div>
-          <div>{isConnecting ? 'Conectando...' : 'Investidor'}</div>
+          <div>Investidor</div> {/* {isConnecting ? 'Conectando...' : 'Investidor'} */}
           <div style={{ fontSize: '14px', opacity: 0.9, marginTop: '5px' }}>
-            {isConnecting ? 'Aguarde...' : 'Invista em tokens'}
+            Invista em tokens {/* {isConnecting ? 'Aguarde...' : 'Invista em tokens'} */}
           </div>
         </button>
       </div>
       
       {/* Mensagem de erro de conexão */}
-      {connectionError && (
+      {/* {connectionError && (
         <div style={{ 
           maxWidth: '600px',
           width: '100%',
@@ -174,7 +176,7 @@ function App() {
         }}>
           ⚠️ {connectionError}
         </div>
-      )}
+      )} */}
       
       <div style={{ 
         color: 'white', 

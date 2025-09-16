@@ -44,7 +44,7 @@ interface ContratoFinalizado {
   status: 'finalizado';
 }
 
-type DashboardTab = 'emprestimos' | 'contrato' | 'historico';
+type DashboardTab = 'emprestimos' | 'historico';
 
 function InvestidorDashboard() {
   const sorobanContext = useSorobanReact();
@@ -53,6 +53,8 @@ function InvestidorDashboard() {
   const [valorInvestimento, setValorInvestimento] = useState('');
   const [filtroConstrutora, setFiltroConstrutora] = useState('');
   const [filtroAPY, setFiltroAPY] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   // Dados simulados de empréstimos futuros
   const [emprestimosFuturos] = useState<EmprestimoFuturo[]>([
@@ -154,14 +156,51 @@ function InvestidorDashboard() {
 
   const handleInvestir = (emprestimo: EmprestimoFuturo) => {
     setSelectedEmprestimo(emprestimo);
-    setActiveTab('contrato');
   };
 
-  const handleAssinarContrato = () => {
-    alert('Contrato assinado com sucesso! Investimento realizado.');
-    setActiveTab('emprestimos');
-    setSelectedEmprestimo(null);
-    setValorInvestimento('');
+  const handleAssinarContrato = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitMessage(null);
+    
+    if (!selectedEmprestimo) {
+      setSubmitMessage({type: 'error', text: 'Selecione um empréstimo para investir.'});
+      return;
+    }
+    
+    if (!valorInvestimento || parseFloat(valorInvestimento) <= 0) {
+      setSubmitMessage({type: 'error', text: 'Valor do investimento deve ser maior que zero.'});
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Simular chamada para API
+      const investmentData = {
+        emprestimoId: selectedEmprestimo.id,
+        valorInvestimento: parseFloat(valorInvestimento),
+        tokensAReceber: Math.floor(parseFloat(valorInvestimento) / parseFloat(selectedEmprestimo.precoParte)),
+        investorWallet: sorobanContext.address || 'DEMO_WALLET',
+        timestamp: new Date().toISOString(),
+        emprestimo: selectedEmprestimo
+      };
+      
+      console.log('Enviando investimento para API:', investmentData);
+      
+      // Simular delay da API
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setSubmitMessage({type: 'success', text: 'Contrato assinado com sucesso! Investimento realizado.'});
+      
+      // Limpar formulário
+      setSelectedEmprestimo(null);
+      setValorInvestimento('');
+      
+    } catch (error) {
+      setSubmitMessage({type: 'error', text: 'Erro ao realizar investimento. Tente novamente.'});
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const emprestimosFiltrados = emprestimosFuturos.filter(emprestimo => {
@@ -176,274 +215,299 @@ function InvestidorDashboard() {
         💰 Empréstimos Futuros
       </h2>
 
-      {/* Filtros */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '20px', 
-        borderRadius: '10px', 
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '20px'
-      }}>
-        <h3 style={{ color: '#333', marginBottom: '15px' }}>Filtros</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Construtora:
-            </label>
-            <input
-              type="text"
-              value={filtroConstrutora}
-              onChange={(e) => setFiltroConstrutora(e.target.value)}
-              placeholder="Digite o nome da construtora"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              APY Mínimo (%):
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              value={filtroAPY}
-              onChange={(e) => setFiltroAPY(e.target.value)}
-              placeholder="Ex: 10.0"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Lista de Empréstimos */}
-      <div style={{ display: 'grid', gap: '20px' }}>
-        {emprestimosFiltrados.map(emprestimo => (
-          <div key={emprestimo.id} style={{ 
-            backgroundColor: 'white', 
-            padding: '25px', 
-            borderRadius: '15px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            border: '2px solid #e5e7eb'
-          }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div>
-                <h3 style={{ color: '#333', marginBottom: '10px', fontSize: '1.3rem' }}>
-                  {emprestimo.nomeEmprestimo}
-                </h3>
-                <p style={{ color: '#666', marginBottom: '5px' }}>
-                  <strong>Construtora:</strong> {emprestimo.construtora}
-                </p>
-                <p style={{ color: '#666', marginBottom: '5px' }}>
-                  <strong>Token:</strong> {emprestimo.nomeToken} - {emprestimo.complexoConstrutora}
-                </p>
-                <p style={{ color: '#666', marginBottom: '5px' }}>
-                  <strong>Localização:</strong> {emprestimo.localizacao}
-                </p>
-                <p style={{ color: '#666', marginBottom: '5px' }}>
-                  <strong>Prazo:</strong> {emprestimo.prazo} meses
-                </p>
-                <p style={{ color: '#666', marginBottom: '5px' }}>
-                  <strong>Note Token:</strong> {emprestimo.noteToken}
-                </p>
-              </div>
-              
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ 
-                  backgroundColor: '#f0f9ff', 
-                  padding: '15px', 
-                  borderRadius: '10px',
-                  border: '2px solid #0ea5e9',
-                  marginBottom: '15px'
-                }}>
-                  <p style={{ color: '#0c4a6e', margin: '5px 0', fontSize: '14px' }}>
-                    <strong>APY:</strong> {emprestimo.porcentagemAPY}%
-                  </p>
-                  <p style={{ color: '#0c4a6e', margin: '5px 0', fontSize: '14px' }}>
-                    <strong>Preço por Token:</strong> ${emprestimo.precoParte}
-                  </p>
-                </div>
-                
-                <div style={{ 
-                  backgroundColor: '#fef3c7', 
-                  padding: '15px', 
-                  borderRadius: '10px',
-                  border: '2px solid #f59e0b',
-                  marginBottom: '15px'
-                }}>
-                  <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
-                    <strong>Progresso:</strong> {emprestimo.porcentagemConclusao}
-                  </p>
-                  <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
-                    <strong>Tokens Restantes:</strong> {parseInt(emprestimo.tokensRestantes).toLocaleString()}
-                  </p>
-                </div>
-                
-                <button
-                  onClick={() => handleInvestir(emprestimo)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#059669'}
-                  onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#10b981'}
-                >
-                  💰 Investir
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderAssinaturaContrato = () => (
-    <div style={{ padding: '20px' }}>
-      <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-        📝 Assinatura do Contrato
-      </h2>
-
-      {selectedEmprestimo && (
-        <>
-          {/* Informações do Empréstimo */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+        {/* Coluna Esquerda: Filtros + Lista */}
+        <div>
+          {/* Filtros */}
           <div style={{ 
             backgroundColor: 'white', 
-            padding: '25px', 
-            borderRadius: '15px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            padding: '20px', 
+            borderRadius: '10px', 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             marginBottom: '20px'
           }}>
-            <h3 style={{ color: '#333', marginBottom: '20px' }}>Detalhes do Empréstimo</h3>
+            <h3 style={{ color: '#333', marginBottom: '15px' }}>Filtros</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Nome:</strong> {selectedEmprestimo.nomeEmprestimo}
-                </p>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Construtora:</strong> {selectedEmprestimo.construtora}
-                </p>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Token:</strong> {selectedEmprestimo.nomeToken}
-                </p>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Localização:</strong> {selectedEmprestimo.localizacao}
-                </p>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                  Construtora:
+                </label>
+                <input
+                  type="text"
+                  value={filtroConstrutora}
+                  onChange={(e) => setFiltroConstrutora(e.target.value)}
+                  placeholder="Digite o nome da construtora"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '14px'
+                  }}
+                />
               </div>
               <div>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>APY:</strong> {selectedEmprestimo.porcentagemAPY}%
-                </p>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Prazo:</strong> {selectedEmprestimo.prazo} meses
-                </p>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Preço por Token:</strong> ${selectedEmprestimo.precoParte}
-                </p>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Valor Total:</strong> ${parseInt(selectedEmprestimo.valorTotal).toLocaleString()}
-                </p>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                  APY Mínimo (%):
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={filtroAPY}
+                  onChange={(e) => setFiltroAPY(e.target.value)}
+                  placeholder="Ex: 10.0"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '14px'
+                  }}
+                />
               </div>
             </div>
           </div>
 
-          {/* Formulário de Investimento */}
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '25px', 
-            borderRadius: '15px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            marginBottom: '20px'
-          }}>
-            <h3 style={{ color: '#333', marginBottom: '20px' }}>Valor do Investimento</h3>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                Valor a Investir (USDC):
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={valorInvestimento}
-                onChange={(e) => setValorInvestimento(e.target.value)}
-                placeholder="Ex: 1000.00"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-              />
-            </div>
-
-            {valorInvestimento && (
-              <div style={{ 
-                backgroundColor: '#f0f9ff', 
-                padding: '15px', 
-                borderRadius: '8px', 
-                border: '2px solid #0ea5e9',
-                marginBottom: '20px'
-              }}>
-                <h4 style={{ color: '#0c4a6e', marginBottom: '10px' }}>Resumo do Investimento</h4>
-                <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                  <strong>Valor Investido:</strong> ${parseFloat(valorInvestimento).toLocaleString()}
-                </p>
-                <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                  <strong>Tokens a Receber:</strong> {Math.floor(parseFloat(valorInvestimento) / parseFloat(selectedEmprestimo.precoParte)).toLocaleString()}
-                </p>
-                <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                  <strong>Juros Anuais:</strong> ${(parseFloat(valorInvestimento) * parseFloat(selectedEmprestimo.porcentagemAPY) / 100).toFixed(2)}
-                </p>
-                <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                  <strong>Total ao Final:</strong> ${(parseFloat(valorInvestimento) * (1 + parseFloat(selectedEmprestimo.porcentagemAPY) / 100)).toFixed(2)}
-                </p>
-              </div>
-            )}
-
-            <button
-              onClick={handleAssinarContrato}
-              disabled={!valorInvestimento}
-              style={{
-                width: '100%',
-                padding: '15px',
-                backgroundColor: valorInvestimento ? '#10b981' : '#9ca3af',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                cursor: valorInvestimento ? 'pointer' : 'not-allowed',
+          {/* Lista de Empréstimos */}
+          <div style={{ display: 'grid', gap: '20px' }}>
+            {emprestimosFiltrados.map(emprestimo => (
+              <div key={emprestimo.id} style={{ 
+                backgroundColor: 'white', 
+                padding: '25px', 
+                borderRadius: '15px', 
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              ✍️ Assinar Contrato e Investir
-            </button>
+                border: '2px solid #e5e7eb'
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                  <div>
+                    <h3 style={{ color: '#333', marginBottom: '10px', fontSize: '1.3rem' }}>
+                      {emprestimo.nomeEmprestimo}
+                    </h3>
+                    <p style={{ color: '#666', marginBottom: '5px' }}>
+                      <strong>Construtora:</strong> {emprestimo.construtora}
+                    </p>
+                    <p style={{ color: '#666', marginBottom: '5px' }}>
+                      <strong>Token:</strong> {emprestimo.nomeToken} - {emprestimo.complexoConstrutora}
+                    </p>
+                    <p style={{ color: '#666', marginBottom: '5px' }}>
+                      <strong>Localização:</strong> {emprestimo.localizacao}
+                    </p>
+                    <p style={{ color: '#666', marginBottom: '5px' }}>
+                      <strong>Prazo:</strong> {emprestimo.prazo} meses
+                    </p>
+                    <p style={{ color: '#666', marginBottom: '5px' }}>
+                      <strong>Note Token:</strong> {emprestimo.noteToken}
+                    </p>
+                  </div>
+                  
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ 
+                      backgroundColor: '#f0f9ff', 
+                      padding: '15px', 
+                      borderRadius: '10px',
+                      border: '2px solid #0ea5e9',
+                      marginBottom: '15px'
+                    }}>
+                      <p style={{ color: '#0c4a6e', margin: '5px 0', fontSize: '14px' }}>
+                        <strong>APY:</strong> {emprestimo.porcentagemAPY}%
+                      </p>
+                      <p style={{ color: '#0c4a6e', margin: '5px 0', fontSize: '14px' }}>
+                        <strong>Preço por Token:</strong> ${emprestimo.precoParte}
+                      </p>
+                    </div>
+                    
+                    <div style={{ 
+                      backgroundColor: '#fef3c7', 
+                      padding: '15px', 
+                      borderRadius: '10px',
+                      border: '2px solid #f59e0b',
+                      marginBottom: '15px'
+                    }}>
+                      <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
+                        <strong>Progresso:</strong> {emprestimo.porcentagemConclusao}
+                      </p>
+                      <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
+                        <strong>Tokens Restantes:</strong> {parseInt(emprestimo.tokensRestantes).toLocaleString()}
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={() => handleInvestir(emprestimo)}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#059669'}
+                      onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#10b981'}
+                    >
+                      💰 Investir
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Coluna Direita: Assinatura do Contrato */}
+        <div>
+          {selectedEmprestimo ? (
+            <div>
+              {/* Mensagem de feedback */}
+              {submitMessage && (
+                <div style={{ 
+                  padding: '15px', 
+                  borderRadius: '8px', 
+                  marginBottom: '20px',
+                  backgroundColor: submitMessage.type === 'success' ? '#d1fae5' : '#fee2e2',
+                  border: `2px solid ${submitMessage.type === 'success' ? '#10b981' : '#ef4444'}`,
+                  color: submitMessage.type === 'success' ? '#065f46' : '#991b1b'
+                }}>
+                  {submitMessage.type === 'success' ? '✅' : '❌'} {submitMessage.text}
+                </div>
+              )}
+              
+              <form onSubmit={handleAssinarContrato}>
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  padding: '25px', 
+                  borderRadius: '15px', 
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ color: '#333', marginBottom: '20px' }}>📝 Assinatura do Contrato</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>Nome:</strong> {selectedEmprestimo.nomeEmprestimo}
+                    </p>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>Construtora:</strong> {selectedEmprestimo.construtora}
+                    </p>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>Token:</strong> {selectedEmprestimo.nomeToken}
+                    </p>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>Localização:</strong> {selectedEmprestimo.localizacao}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>APY:</strong> {selectedEmprestimo.porcentagemAPY}%
+                    </p>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>Prazo:</strong> {selectedEmprestimo.prazo} meses
+                    </p>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>Preço por Token:</strong> ${selectedEmprestimo.precoParte}
+                    </p>
+                    <p style={{ margin: '8px 0', color: '#666' }}>
+                      <strong>Valor Total:</strong> ${parseInt(selectedEmprestimo.valorTotal).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  padding: '25px', 
+                  borderRadius: '15px', 
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                }}>
+                  <h3 style={{ color: '#333', marginBottom: '20px' }}>Valor do Investimento</h3>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    Valor a Investir (USDC):
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={valorInvestimento}
+                    onChange={(e) => setValorInvestimento(e.target.value)}
+                    placeholder="Ex: 1000.00"
+                    required
+                    min="0.01"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+
+                {valorInvestimento && (
+                  <div style={{ 
+                    backgroundColor: '#f0f9ff', 
+                    padding: '15px', 
+                    borderRadius: '8px', 
+                    border: '2px solid #0ea5e9',
+                    marginBottom: '20px'
+                  }}>
+                    <h4 style={{ color: '#0c4a6e', marginBottom: '10px' }}>Resumo do Investimento</h4>
+                    <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
+                      <strong>Valor Investido:</strong> ${parseFloat(valorInvestimento).toLocaleString()}
+                    </p>
+                    <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
+                      <strong>Tokens a Receber:</strong> {Math.floor(parseFloat(valorInvestimento) / parseFloat(selectedEmprestimo.precoParte)).toLocaleString()}
+                    </p>
+                    <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
+                      <strong>Juros Anuais:</strong> ${(parseFloat(valorInvestimento) * parseFloat(selectedEmprestimo.porcentagemAPY) / 100).toFixed(2)}
+                    </p>
+                    <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
+                      <strong>Total ao Final:</strong> ${(parseFloat(valorInvestimento) * (1 + parseFloat(selectedEmprestimo.porcentagemAPY) / 100)).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !valorInvestimento}
+                  style={{
+                    width: '100%',
+                    padding: '15px',
+                    backgroundColor: (isSubmitting || !valorInvestimento) ? '#9ca3af' : '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    cursor: (isSubmitting || !valorInvestimento) ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {isSubmitting ? '⏳ Processando...' : '✍️ Assinar Contrato e Investir'}
+                </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <div style={{
+              backgroundColor: 'white',
+              padding: '25px',
+              borderRadius: '15px',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}>
+              <h3 style={{ color: '#333', margin: 0 }}>Selecione um empréstimo para investir</h3>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
+
+  // (Removido) renderAssinaturaContrato agora faz parte da aba de Empréstimos
 
   const renderHistorico = () => (
     <div style={{ padding: '20px' }}>
@@ -675,8 +739,7 @@ function InvestidorDashboard() {
       }}>
         <div style={{ display: 'flex', gap: '0' }}>
           {[
-            { id: 'emprestimos', label: '💰 Empréstimos Futuros', icon: '💰' },
-            { id: 'contrato', label: '📝 Assinatura Contrato', icon: '📝' },
+            { id: 'emprestimos', label: '💰 Empréstimos & Contratos', icon: '💰' },
             { id: 'historico', label: '📊 Histórico', icon: '📊' }
           ].map(tab => (
             <button
@@ -703,7 +766,6 @@ function InvestidorDashboard() {
       {/* Content */}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {activeTab === 'emprestimos' && renderEmprestimosFuturos()}
-        {activeTab === 'contrato' && renderAssinaturaContrato()}
         {activeTab === 'historico' && renderHistorico()}
       </div>
     </div>
