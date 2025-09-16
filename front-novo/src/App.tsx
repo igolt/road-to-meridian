@@ -213,47 +213,7 @@ function App() {
             {t('landing.hero.subtitle')}
           </p>
 
-          <div style={{
-            display: 'flex',
-            gap: '15px',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            marginBottom: '20px'
-          }}>
-            <span style={{
-              padding: '6px 12px',
-              backgroundColor: 'rgba(76, 139, 245, 0.2)',
-              color: '#4C8BF5',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '600',
-              border: '1px solid rgba(76, 139, 245, 0.3)'
-            }}>
-              {t('landing.hero.tagline1')}
-            </span>
-            <span style={{
-              padding: '6px 12px',
-              backgroundColor: 'rgba(139, 92, 246, 0.2)',
-              color: '#8b5cf6',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '600',
-              border: '1px solid rgba(139, 92, 246, 0.3)'
-            }}>
-              {t('landing.hero.tagline2')}
-            </span>
-            <span style={{
-              padding: '6px 12px',
-              backgroundColor: 'rgba(16, 185, 129, 0.2)',
-              color: '#10b981',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '600',
-              border: '1px solid rgba(16, 185, 129, 0.3)'
-            }}>
-              {t('landing.hero.tagline3')}
-            </span>
-          </div>
+          {/* Taglines removidas */}
         </div>
 
         {/* Cards Section */}
@@ -552,81 +512,7 @@ function App() {
           </div>
         )}
 
-        {/* Stats Section */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '30px',
-          maxWidth: '800px',
-          width: '100%',
-          marginBottom: '40px'
-        }}>
-          <div style={{
-            textAlign: 'center',
-            animation: 'fadeInUp 1.2s ease-out'
-          }}>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: '800',
-              color: '#4C8BF5',
-              marginBottom: '8px'
-            }}>
-              $2.5M+
-            </div>
-            <div style={{
-              fontSize: '14px',
-              color: 'rgba(255,255,255,0.8)',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>
-              {t('landing.stats.totalRaised')}
-            </div>
-          </div>
-
-          <div style={{
-            textAlign: 'center',
-            animation: 'fadeInUp 1.4s ease-out'
-          }}>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: '800',
-              color: '#8b5cf6',
-              marginBottom: '8px'
-            }}>
-              500+
-            </div>
-            <div style={{
-              fontSize: '14px',
-              color: 'rgba(255,255,255,0.8)',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>
-              {t('landing.stats.properties')}
-            </div>
-          </div>
-
-          <div style={{
-            textAlign: 'center',
-            animation: 'fadeInUp 1.6s ease-out'
-          }}>
-            <div style={{
-              fontSize: '36px',
-              fontWeight: '800',
-              color: '#10b981',
-              marginBottom: '8px'
-            }}>
-              12%
-            </div>
-            <div style={{
-              fontSize: '14px',
-              color: 'rgba(255,255,255,0.8)',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>
-              {t('landing.stats.avgApy')}
-            </div>
-          </div>
-        </div>
+        {/* Seção de métricas removida */}
       </main>
 
       {/* Footer */}
