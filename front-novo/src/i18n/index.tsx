@@ -85,6 +85,34 @@ const ptBR: Dictionary = {
   'company.metrics.table.investors': 'Investidores',
   'company.metrics.table.currentValue': 'Valor Atual',
 
+  // Landing Page (restaurado do commit antigo)
+  'landing.hero.title': 'RealYield',
+  'landing.hero.subtitle': 'Revolucione o investimento imobiliário através da tokenização blockchain na rede Stellar',
+  'landing.hero.tagline1': '🚀 Seguro',
+  'landing.hero.tagline2': '⚡ Rápido',
+  'landing.hero.tagline3': '💎 Transparente',
+
+  'landing.company.title': 'Para Empresas',
+  'landing.company.description': 'Tokenize seus ativos imobiliários e levante capital de forma eficiente',
+  'landing.company.feature1': 'Tokenização segura na Stellar',
+  'landing.company.feature2': 'Acesso global de investidores',
+  'landing.company.feature3': 'Acompanhamento de performance em tempo real',
+  'landing.company.button': 'Começar Tokenização →',
+
+  'landing.investor.title': 'Para Investidores',
+  'landing.investor.description': 'Descubra oportunidades de imóveis tokenizados com altos retornos',
+  'landing.investor.feature1': 'Portfólio imobiliário diversificado',
+  'landing.investor.feature2': 'Investimento mínimo baixo',
+  'landing.investor.feature3': 'Tokens líquidos e negociáveis',
+  'landing.investor.button': 'Começar Investimento →',
+
+  'landing.stats.totalRaised': 'Total Arrecadado',
+  'landing.stats.properties': 'Propriedades',
+  'landing.stats.avgApy': 'APY Médio',
+
+  'landing.footer.powered': 'Powered by Stellar Network',
+  'landing.footer.tagline': 'Seguro • Transparente • Eficiente',
+
   'investor.title': '💰 Dashboard Investidor - RealYield',
   'investor.futureLoans.title': '💰 Empréstimos Futuros',
   'investor.filters.title': 'Filtros',
