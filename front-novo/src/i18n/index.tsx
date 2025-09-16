@@ -301,7 +301,7 @@ type I18nContextType = {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocale] = useState<Locale>('pt-BR');
+  const [locale, setLocale] = useState<Locale>('en-US');
 
   const dict = useMemo(() => (locale === 'pt-BR' ? ptBR : enUS), [locale]);
 
