@@ -34,7 +34,8 @@ pub struct Property {
     pub ele_quer: i128,
     pub ele_tem: i128,
     pub total_supply: i128,
-    pub nome_construtora: String, 
+    pub nome_construtora: String,
+    pub ipfs: String, 
     pub sigla: String,
 }
 
@@ -61,6 +62,7 @@ impl RealEstateTokenContract {
         ele_tem: i128,
         total_supply: i128,
         nome_construtora: String,
+        ipfs: String,
         sigla: String
 
     ) -> u128 {
@@ -81,6 +83,7 @@ impl RealEstateTokenContract {
             ele_tem,
             total_supply,
             nome_construtora,
+            ipfs,
             sigla
         };
 
