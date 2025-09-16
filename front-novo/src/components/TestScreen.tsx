@@ -17,7 +17,7 @@ export const TestScreen: React.FC = () => {
         marginBottom: '20px',
         textAlign: 'center'
       }}>
-        RealYild
+        RealYield
       </h1>
       <p style={{ 
         fontSize: '1.2rem', 

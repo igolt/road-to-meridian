@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { StellarPasskeyService, type StellarUser } from './services/StellarPasskeyService';
+import EmpresaDashboard from './components/EmpresaDashboard';
+import InvestidorDashboard from './components/InvestidorDashboard';
 
-type AppState = 'realyild' | 'empresa' | 'investidor';
+type AppState = 'realyield' | 'empresa' | 'investidor';
 
 function App() {
-  const [currentState, setCurrentState] = useState<AppState>('realyild');
+  const [currentState, setCurrentState] = useState<AppState>('realyield');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [currentUser, setCurrentUser] = useState<StellarUser | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -76,115 +78,19 @@ function App() {
     }
   };
 
-  const handleBackToRealYild = async () => {
+  const handleBackToRealYield = async () => {
     await passkeyService.disconnect();
     setCurrentUser(null);
-    setCurrentState('realyild');
+    setCurrentState('realyield');
     setAuthError(null);
   };
 
   if (currentState === 'empresa') {
-    return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: '#f0f0f0', 
-        padding: '20px',
-        fontFamily: 'Arial, sans-serif'
-      }}>
-        <button 
-          onClick={handleBackToRealYild}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#666',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
-        >
-          ← Voltar para RealYild
-        </button>
-        <h1 style={{ color: '#333', marginBottom: '20px' }}>Dashboard Empresa</h1>
-        <p style={{ color: '#666', marginBottom: '20px' }}>Gerencie seus tokens de imóveis</p>
-        {currentUser && (
-          <div style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: '15px', 
-            borderRadius: '8px', 
-            marginBottom: '20px',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ color: '#333', marginBottom: '10px' }}>Informações da Carteira</h3>
-            <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-              <strong>Nome:</strong> {currentUser.name}
-            </p>
-            {currentUser.publicKey && (
-              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-                <strong>Chave Pública:</strong> {currentUser.publicKey.substring(0, 20)}...
-              </p>
-            )}
-            {currentUser.contractAddress && (
-              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-                <strong>Contrato:</strong> {currentUser.contractAddress.substring(0, 20)}...
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    );
+    return <EmpresaDashboard currentUser={currentUser} onBack={handleBackToRealYield} />;
   }
 
   if (currentState === 'investidor') {
-    return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: '#f0f0f0', 
-        padding: '20px',
-        fontFamily: 'Arial, sans-serif'
-      }}>
-        <button 
-          onClick={handleBackToRealYild}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#666',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
-        >
-          ← Voltar para RealYild
-        </button>
-        <h1 style={{ color: '#333', marginBottom: '20px' }}>Dashboard Investidor</h1>
-        <p style={{ color: '#666', marginBottom: '20px' }}>Gerencie seus investimentos em tokens de imóveis</p>
-        {currentUser && (
-          <div style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: '15px', 
-            borderRadius: '8px', 
-            marginBottom: '20px',
-            border: '1px solid #e9ecef'
-          }}>
-            <h3 style={{ color: '#333', marginBottom: '10px' }}>Informações da Carteira</h3>
-            <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-              <strong>Nome:</strong> {currentUser.name}
-            </p>
-            {currentUser.publicKey && (
-              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-                <strong>Chave Pública:</strong> {currentUser.publicKey.substring(0, 20)}...
-              </p>
-            )}
-            {currentUser.contractAddress && (
-              <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-                <strong>Contrato:</strong> {currentUser.contractAddress.substring(0, 20)}...
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    );
+    return <InvestidorDashboard currentUser={currentUser} onBack={handleBackToRealYield} />;
   }
 
   if (isAuthenticating) {
@@ -233,7 +139,7 @@ function App() {
     );
   }
 
-  // Tela principal RealYild
+  // Tela principal RealYield
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -253,7 +159,7 @@ function App() {
         fontWeight: 'bold',
         textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
       }}>
-        RealYild
+        RealYield
       </h1>
       <p style={{ 
         fontSize: '1.2rem', 
@@ -333,7 +239,7 @@ function App() {
         marginTop: '40px',
         textAlign: 'center'
       }}>
-        Powered by Stellar Network • Autenticação com Passkey
+        Powered by Stellar Network
       </div>
     </div>
   );
