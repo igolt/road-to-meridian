@@ -1,5 +1,5 @@
 import { useState } from 'react';
-// import { useWallet } from '../wallet/WalletProvider'; // Comentado para acessar sem carteira
+// import { useWallet } from '../wallet/WalletProvider';
 import { useI18n } from '../i18n/index';
 
 interface EmprestimoFuturo {
@@ -51,7 +51,7 @@ interface ContratoFinalizado {
 type DashboardTab = 'emprestimos' | 'historico';
 
 function InvestidorDashboard() {
-  // const { address } = useWallet(); // Comentado para acessar sem carteira
+  // const { address } = useWallet();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emprestimos');
   const [selectedEmprestimo, setSelectedEmprestimo] = useState<EmprestimoFuturo | null>(null);
@@ -191,7 +191,7 @@ function InvestidorDashboard() {
         emprestimoId: selectedEmprestimo.id,
         valorInvestimento: parseFloat(valorInvestimento),
         tokensAReceber: Math.floor(parseFloat(valorInvestimento) / parseFloat(selectedEmprestimo.precoParte)),
-        // investorWallet: address || 'DEMO_WALLET', // Reative quando quiser usar carteira real
+        // investorWallet: address || 'DEMO_WALLET'
         investorWallet: 'DEMO_WALLET',
         timestamp: new Date().toISOString(),
         emprestimo: selectedEmprestimo
