@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSorobanReact } from '@soroban-react/core';
+import { useWallet } from '../wallet/WalletProvider';
 import { useI18n } from '../i18n/index';
 
 interface RWAFormData {
@@ -39,7 +39,7 @@ interface Contract {
 type DashboardTab = 'emissao' | 'contratos' | 'metricas';
 
 function EmpresaDashboard() {
-  const sorobanContext = useSorobanReact();
+  const { address } = useWallet();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emissao');
   const [rwaForm, setRwaForm] = useState<RWAFormData>({
@@ -168,7 +168,7 @@ function EmpresaDashboard() {
         expectedAmount: Number(rwaForm.expectedAmount),
         interestRate: Number(rwaForm.interestRate),
         prazo: Number(rwaForm.prazo),
-        companyWallet: sorobanContext.address || 'DEMO_WALLET',
+        companyWallet: address || 'DEMO_WALLET',
         timestamp: new Date().toISOString()
       };
       

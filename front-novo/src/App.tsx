@@ -1,17 +1,17 @@
 import { useState } from 'react';
-// import { useSorobanReact } from '@soroban-react/core';
+import SorobanProvider from './components/SorobanProvider';
 import EmpresaDashboard from './components/EmpresaDashboard';
 import InvestidorDashboard from './components/InvestidorDashboard';
 import { useI18n } from './i18n/index';
+import { useWallet } from './wallet/WalletProvider';
 
 type AppState = 'realyield' | 'empresa' | 'investidor';
 
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('realyield');
   const { t, toggleLocale } = useI18n();
-  // const [isConnecting, setIsConnecting] = useState(false);
-  // const [connectionError, setConnectionError] = useState<string | null>(null);
-  // const sorobanContext = useSorobanReact();
+  const { connect, isConnecting } = useWallet();
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // const connectWalletAndNavigate = async (targetState: 'empresa' | 'investidor') => {
   //   setIsConnecting(true);
@@ -33,14 +33,24 @@ function App() {
   //   }
   // };
 
-  const handleSelectEmpresa = () => {
-    // connectWalletAndNavigate('empresa');
-    setCurrentState('empresa');
+  const handleSelectEmpresa = async () => {
+    setConnectionError(null);
+    try {
+      await connect();
+      setCurrentState('empresa');
+    } catch (error) {
+      setConnectionError('Falha ao conectar carteira. Verifique a extensão Freighter.');
+    }
   };
 
-  const handleSelectInvestidor = () => {
-    // connectWalletAndNavigate('investidor');
-    setCurrentState('investidor');
+  const handleSelectInvestidor = async () => {
+    setConnectionError(null);
+    try {
+      await connect();
+      setCurrentState('investidor');
+    } catch (error) {
+      setConnectionError('Falha ao conectar carteira. Verifique a extensão Freighter.');
+    }
   };
 
   // const handleBackToRealYield = () => {
@@ -48,16 +58,12 @@ function App() {
   //   // setConnectionError(null);
   // };
 
-  if (currentState === 'empresa') {
-    return <EmpresaDashboard />;
-  }
-
-  if (currentState === 'investidor') {
-    return <InvestidorDashboard />;
-  }
-
-  // Tela principal RealYield - Design Criativo e Moderno
+  // App inteiro sob o provider para permitir conexão na landing
   return (
+    <SorobanProvider>
+    {currentState === 'empresa' && <EmpresaDashboard />}
+    {currentState === 'investidor' && <InvestidorDashboard />}
+    {currentState === 'realyield' && (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%)',
@@ -262,7 +268,6 @@ function App() {
 
           {/* Empresa Card */}
           <div
-            onClick={handleSelectEmpresa}
             style={{
               background: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)',
@@ -368,7 +373,7 @@ function App() {
               </div>
             </div>
 
-            <button style={{
+            <button onClick={handleSelectEmpresa} style={{
               width: '100%',
               padding: '16px 24px',
               background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
@@ -377,10 +382,11 @@ function App() {
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: isConnecting ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
               boxShadow: '0 8px 24px rgba(139, 92, 246, 0.4)'
             }}
+            disabled={isConnecting}
             onMouseOver={(e) => {
               const target = e.target as HTMLButtonElement;
               target.style.transform = 'translateY(-2px)';
@@ -392,13 +398,12 @@ function App() {
               target.style.boxShadow = '0 8px 24px rgba(139, 92, 246, 0.4)';
             }}
             >
-              {t('landing.company.button')}
+              {isConnecting ? 'Conectando...' : t('landing.company.button')}
             </button>
           </div>
 
           {/* Investidor Card */}
           <div
-            onClick={handleSelectInvestidor}
             style={{
               background: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)',
@@ -504,7 +509,7 @@ function App() {
               </div>
             </div>
 
-            <button style={{
+            <button onClick={handleSelectInvestidor} style={{
               width: '100%',
               padding: '16px 24px',
               background: 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)',
@@ -513,10 +518,11 @@ function App() {
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: isConnecting ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
               boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)'
             }}
+            disabled={isConnecting}
             onMouseOver={(e) => {
               const target = e.target as HTMLButtonElement;
               target.style.transform = 'translateY(-2px)';
@@ -528,10 +534,23 @@ function App() {
               target.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.4)';
             }}
             >
-              {t('landing.investor.button')}
+              {isConnecting ? 'Conectando...' : t('landing.investor.button')}
             </button>
           </div>
         </div>
+
+        {connectionError && (
+          <div style={{
+            marginTop: '16px',
+            color: '#f87171',
+            backgroundColor: 'rgba(248,113,113,0.15)',
+            border: '1px solid rgba(248,113,113,0.35)',
+            padding: '10px 14px',
+            borderRadius: '10px'
+          }}>
+            {connectionError}
+          </div>
+        )}
 
         {/* Stats Section */}
         <div style={{
@@ -658,6 +677,8 @@ function App() {
       </footer>
 
     </div>
+    )}
+    </SorobanProvider>
   );
 }
 

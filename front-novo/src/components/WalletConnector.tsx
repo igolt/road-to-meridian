@@ -1,31 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { useSorobanReact } from '@soroban-react/core';
+import { useWallet } from '../wallet/WalletProvider';
 
 const WalletConnector = () => {
-  const sorobanContext = useSorobanReact();
-  const [isConnected, setIsConnected] = useState(false);
+  const { address, connect, disconnect, isConnecting, isInstalled } = useWallet();
+  const [isConnected, setIsConnected] = useState(true);
   const [account, setAccount] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Verificar se a carteira já está conectada ao carregar o componente
   useEffect(() => {
     const checkConnection = async () => {
-      if (sorobanContext.address) {
+      if (address) {
         setIsConnected(true);
-        setAccount(sorobanContext.address);
+        setAccount(address);
       }
     };
     checkConnection();
-  }, [sorobanContext.address]);
+  }, [address]);
 
   const connectWallet = async () => {
     setLoading(true);
     try {
-      // Conectar à carteira Freighter
-      await sorobanContext.connect();
+      await connect();
       setIsConnected(true);
-      setAccount(sorobanContext.address);
-      console.log('Carteira conectada:', sorobanContext.address);
+      setAccount(address || null);
+      console.log('Carteira conectada:', address);
     } catch (error) {
       console.error('Erro ao conectar carteira:', error);
     } finally {
@@ -35,7 +34,7 @@ const WalletConnector = () => {
 
   const disconnectWallet = async () => {
     try {
-      await sorobanContext.disconnect();
+      await disconnect();
       setIsConnected(false);
       setAccount(null);
       console.log('Carteira desconectada');
@@ -60,30 +59,30 @@ const WalletConnector = () => {
       {!isConnected ? (
         <button 
           onClick={connectWallet} 
-          disabled={loading}
+          disabled={loading || isConnecting || !isInstalled}
           style={{
             padding: '12px 24px',
-            backgroundColor: loading ? '#ccc' : '#007bff',
+            backgroundColor: (loading || isConnecting || !isInstalled) ? '#ccc' : '#007bff',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
-            cursor: loading ? 'not-allowed' : 'pointer',
+            cursor: (loading || isConnecting || !isInstalled) ? 'not-allowed' : 'pointer',
             fontSize: '16px',
             fontWeight: 'bold',
             transition: 'all 0.3s ease'
           }}
           onMouseOver={(e) => {
-            if (!loading) {
+            if (!(loading || isConnecting || !isInstalled)) {
               (e.target as HTMLButtonElement).style.backgroundColor = '#0056b3';
             }
           }}
           onMouseOut={(e) => {
-            if (!loading) {
+            if (!(loading || isConnecting || !isInstalled)) {
               (e.target as HTMLButtonElement).style.backgroundColor = '#007bff';
             }
           }}
         >
-          {loading ? '🔄 Conectando...' : '🔗 Conectar Carteira Freighter'}
+          {!isInstalled ? '⚠️ Instale a Freighter' : (loading || isConnecting) ? '🔄 Conectando...' : '🔗 Conectar Carteira Freighter'}
         </button>
       ) : (
         <div>
