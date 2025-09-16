@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import EmpresaDashboard from './components/EmpresaDashboard';
+import InvestidorDashboard from './components/InvestidorDashboard';
 
 type AppState = 'realyield' | 'empresa' | 'investidor';
 
@@ -23,31 +24,7 @@ function App() {
   }
 
   if (currentState === 'investidor') {
-    return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: '#f0f0f0', 
-        padding: '20px',
-        fontFamily: 'Arial, sans-serif'
-      }}>
-        <button 
-          onClick={handleBackToRealYield}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#666',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
-        >
-          ← Voltar para RealYield
-        </button>
-        <h1 style={{ color: '#333', marginBottom: '20px' }}>Dashboard Investidor</h1>
-        <p style={{ color: '#666' }}>Gerencie seus investimentos em tokens de imóveis</p>
-      </div>
-    );
+    return <InvestidorDashboard />;
   }
 
   // Tela principal RealYield

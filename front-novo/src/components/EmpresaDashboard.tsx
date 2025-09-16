@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface RWAFormData {
   assetName: string;
   definition: string;
   totalSupply: string;
-  priceUSDC: string;
   propertyURI: string;
   metadatas: string;
   constructionType: string;
   location: string;
   expectedCompletion: string;
-  loanPercentage: string;
+  expectedAmount: string;
   interestRate: string;
 }
 
@@ -38,13 +37,12 @@ function EmpresaDashboard() {
     assetName: '',
     definition: '',
     totalSupply: '',
-    priceUSDC: '',
     propertyURI: '',
     metadatas: '',
     constructionType: '',
     location: '',
     expectedCompletion: '',
-    loanPercentage: '',
+    expectedAmount: '',
     interestRate: ''
   });
 
@@ -106,13 +104,12 @@ function EmpresaDashboard() {
       assetName: '',
       definition: '',
       totalSupply: '',
-      priceUSDC: '',
       propertyURI: '',
       metadatas: '',
       constructionType: '',
       location: '',
       expectedCompletion: '',
-      loanPercentage: '',
+      expectedAmount: '',
       interestRate: ''
     });
   };
@@ -347,14 +344,14 @@ function EmpresaDashboard() {
                 
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Preço por Token (USDC)
+                    Valor Esperado a Arrecadar (USDC)
                   </label>
                   <input
                     type="number"
                     step="0.01"
-                    value={rwaForm.priceUSDC}
-                    onChange={(e) => handleRWAFormChange('priceUSDC', e.target.value)}
-                    placeholder="0.50"
+                    value={rwaForm.expectedAmount}
+                    onChange={(e) => handleRWAFormChange('expectedAmount', e.target.value)}
+                    placeholder="500000"
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -415,28 +412,8 @@ function EmpresaDashboard() {
             }}>
               <h3 style={{ color: '#10b981', marginBottom: '20px' }}>Configurações de Empréstimo</h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    % Disponível para Empréstimo
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={rwaForm.loanPercentage}
-                    onChange={(e) => handleRWAFormChange('loanPercentage', e.target.value)}
-                    placeholder="70"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-                
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                     Taxa de Juros Anual (%)
@@ -456,7 +433,32 @@ function EmpresaDashboard() {
                     }}
                   />
                 </div>
+                
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    Valor Total com Juros (USDC)
+                  </label>
+                  <input
+                    type="text"
+                    value={rwaForm.expectedAmount && rwaForm.interestRate ? 
+                      (parseFloat(rwaForm.expectedAmount) * (1 + parseFloat(rwaForm.interestRate) / 100)).toFixed(2) : 
+                      ''
+                    }
+                    readOnly
+                    placeholder="Calculado automaticamente"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      backgroundColor: '#f9fafb',
+                      color: '#374151'
+                    }}
+                  />
+                </div>
               </div>
+              
             </div>
 
             <button
@@ -474,8 +476,8 @@ function EmpresaDashboard() {
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 transition: 'all 0.3s ease'
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#7c3aed'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#8b5cf6'}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7c3aed'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8b5cf6'}
             >
               🚀 Criar RWA e Liberar para o Público
             </button>
@@ -513,12 +515,12 @@ function EmpresaDashboard() {
                 borderRadius: '10px',
                 border: '2px solid #3b82f6'
               }}>
-                <h3 style={{ color: '#1e40af', marginBottom: '10px' }}>💰 Investimentos</h3>
+                <h3 style={{ color: '#1e40af', marginBottom: '10px' }}>💰 Empréstimos</h3>
                 <p style={{ margin: '5px 0', color: '#1e40af' }}>
-                  <strong>Total Investido:</strong> ${totalInvested.toLocaleString()}
+                  <strong>Total Emprestado:</strong> ${totalInvested.toLocaleString()}
                 </p>
                 <p style={{ margin: '5px 0', color: '#1e40af' }}>
-                  <strong>ROI Médio:</strong> {((totalProfit / totalInvested) * 100).toFixed(1)}%
+                  <strong>Retorno Médio:</strong> {((totalProfit / totalInvested) * 100).toFixed(1)}%
                 </p>
               </div>
             </div>
@@ -552,15 +554,15 @@ function EmpresaDashboard() {
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
                     <div>
-                      <strong style={{ color: '#666' }}>Investidores:</strong>
+                      <strong style={{ color: '#666' }}>Emprestadores:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>{contract.investors}</p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Valor Atual:</strong>
+                      <strong style={{ color: '#666' }}>Valor do Empréstimo:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>${parseFloat(contract.currentValue).toLocaleString()}</p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Lucro Atual:</strong>
+                      <strong style={{ color: '#666' }}>Juros Acumulados:</strong>
                       <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>
                         ${parseFloat(contract.profit).toLocaleString()}
                       </p>
@@ -628,21 +630,21 @@ function EmpresaDashboard() {
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
                     <div>
-                      <strong style={{ color: '#666' }}>Investidores:</strong>
+                      <strong style={{ color: '#666' }}>Emprestadores:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>{contract.investors}</p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Valor Final:</strong>
+                      <strong style={{ color: '#666' }}>Valor Pago:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>${parseFloat(contract.currentValue).toLocaleString()}</p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Lucro Final:</strong>
+                      <strong style={{ color: '#666' }}>Juros Pagos:</strong>
                       <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>
                         ${parseFloat(contract.profit).toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <strong style={{ color: '#666' }}>Concluído em:</strong>
+                      <strong style={{ color: '#666' }}>Quitado em:</strong>
                       <p style={{ margin: '5px 0', color: '#333' }}>{contract.completionDate}</p>
                     </div>
                   </div>
@@ -667,7 +669,7 @@ function EmpresaDashboard() {
         {activeTab === 'emprestimos' && (
           <div style={{ padding: '20px' }}>
             <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-              💰 Editar Ofertas de Empréstimo RWA
+              💰 Status dos Empréstimos RWA
             </h2>
 
             <div style={{ 
@@ -677,7 +679,7 @@ function EmpresaDashboard() {
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
               marginBottom: '20px'
             }}>
-              <h3 style={{ color: '#8b5cf6', marginBottom: '20px' }}>Selecionar Contrato para Editar</h3>
+              <h3 style={{ color: '#8b5cf6', marginBottom: '20px' }}>Selecionar Contrato para Visualizar</h3>
               
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
@@ -707,28 +709,64 @@ function EmpresaDashboard() {
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
               marginBottom: '20px'
             }}>
-              <h3 style={{ color: '#3b82f6', marginBottom: '20px' }}>Configurações de Empréstimo</h3>
+              <h3 style={{ color: '#3b82f6', marginBottom: '20px' }}>Progresso da Arrecadação</h3>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    % Disponível para Empréstimo
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder="70"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '16px'
-                    }}
-                  />
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#333' }}>Valor Solicitado:</span>
+                  <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>$500,000 USDC</span>
                 </div>
                 
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#333' }}>Valor Arrecadado:</span>
+                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>$350,000 USDC</span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#333' }}>Progresso:</span>
+                  <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>70%</span>
+                </div>
+                
+                {/* Barra de Progresso */}
+                <div style={{ 
+                  width: '100%', 
+                  height: '20px', 
+                  backgroundColor: '#e5e7eb', 
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  marginBottom: '20px'
+                }}>
+                  <div style={{
+                    width: '70%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+                    borderRadius: '10px',
+                    transition: 'width 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    70%
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+
+            <div style={{ 
+              backgroundColor: 'white', 
+              padding: '30px', 
+              borderRadius: '15px', 
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ color: '#10b981', marginBottom: '20px' }}>Configurações do Empréstimo</h3>
+              
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                     Taxa de Juros Anual (%)
@@ -746,58 +784,26 @@ function EmpresaDashboard() {
                     }}
                   />
                 </div>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Valor Mínimo de Empréstimo (USDC)
-                </label>
-                <input
-                  type="number"
-                  placeholder="1000"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Prazo Máximo de Empréstimo (meses)
-                </label>
-                <input
-                  type="number"
-                  placeholder="24"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
-                />
+                
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    Prazo do Empréstimo (meses)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="24"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
-            <div style={{ 
-              backgroundColor: '#f0f9ff', 
-              padding: '20px', 
-              borderRadius: '10px', 
-              border: '2px solid #0ea5e9',
-              marginBottom: '20px'
-            }}>
-              <h4 style={{ color: '#0c4a6e', marginBottom: '10px' }}>ℹ️ Informações Importantes</h4>
-              <ul style={{ color: '#0c4a6e', margin: 0, paddingLeft: '20px' }}>
-                <li>Alterar a % disponível para empréstimo afetará imediatamente os investidores</li>
-                <li>A taxa de juros será aplicada a novos empréstimos</li>
-                <li>Empréstimos existentes manterão suas condições originais</li>
-                <li>Mudanças serão refletidas na rede Stellar em tempo real</li>
-              </ul>
-            </div>
 
             <button
               style={{
@@ -813,10 +819,10 @@ function EmpresaDashboard() {
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 transition: 'all 0.3s ease'
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#3b82f6'}
             >
-              💾 Salvar Alterações na Oferta
+              💾 Atualizar Configurações
             </button>
           </div>
         )}
