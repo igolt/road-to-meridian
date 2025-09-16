@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSorobanReact } from '@soroban-react/core';
+import { useI18n } from '../i18n/index';
 
 interface EmprestimoFuturo {
   id: string;
@@ -15,6 +16,7 @@ interface EmprestimoFuturo {
   valorTotal: string;
   prazo: string;
   localizacao: string;
+  companyWallet: string;
 }
 
 interface ContratoAtivo {
@@ -28,6 +30,7 @@ interface ContratoAtivo {
   apy: string;
   jurosAcumulados: string;
   status: 'ativo';
+  companyWallet: string;
 }
 
 interface ContratoFinalizado {
@@ -42,12 +45,14 @@ interface ContratoFinalizado {
   jurosRecebidos: string;
   valorTotalRecebido: string;
   status: 'finalizado';
+  companyWallet: string;
 }
 
 type DashboardTab = 'emprestimos' | 'historico';
 
 function InvestidorDashboard() {
   const sorobanContext = useSorobanReact();
+  const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emprestimos');
   const [selectedEmprestimo, setSelectedEmprestimo] = useState<EmprestimoFuturo | null>(null);
   const [valorInvestimento, setValorInvestimento] = useState('');
@@ -71,7 +76,8 @@ function InvestidorDashboard() {
       porcentagemAPY: '12.5',
       valorTotal: '1000000',
       prazo: '12',
-      localizacao: 'São Paulo, SP'
+      localizacao: 'São Paulo, SP',
+      companyWallet: 'GABC1234567890ABCDEF1234567890ABCDEF1234'
     },
     {
       id: '2',
@@ -86,7 +92,8 @@ function InvestidorDashboard() {
       porcentagemAPY: '15.0',
       valorTotal: '2000000',
       prazo: '12',
-      localizacao: 'Rio de Janeiro, RJ'
+      localizacao: 'Rio de Janeiro, RJ',
+      companyWallet: 'GDEF1234567890ABCDEF1234567890ABCDEF5678'
     },
     {
       id: '3',
@@ -101,7 +108,8 @@ function InvestidorDashboard() {
       porcentagemAPY: '10.0',
       valorTotal: '1500000',
       prazo: '12',
-      localizacao: 'Belo Horizonte, MG'
+      localizacao: 'Belo Horizonte, MG',
+      companyWallet: 'GHIJ1234567890ABCDEF1234567890ABCDEF9012'
     }
   ]);
 
@@ -117,7 +125,8 @@ function InvestidorDashboard() {
       dataVencimento: '2026-01-15',
       apy: '12.5',
       jurosAcumulados: '625',
-      status: 'ativo'
+      status: 'ativo',
+      companyWallet: 'GABC1234567890ABCDEF1234567890ABCDEF1234'
     },
     {
       id: '2',
@@ -129,7 +138,8 @@ function InvestidorDashboard() {
       dataVencimento: '2027-02-01',
       apy: '15.0',
       jurosAcumulados: '1250',
-      status: 'ativo'
+      status: 'ativo',
+      companyWallet: 'GDEF1234567890ABCDEF1234567890ABCDEF5678'
     }
   ]);
 
@@ -146,7 +156,8 @@ function InvestidorDashboard() {
       apy: '12.0',
       jurosRecebidos: '360',
       valorTotalRecebido: '3360',
-      status: 'finalizado'
+      status: 'finalizado',
+      companyWallet: 'GVISTA1234567890ABCDEF1234567890ABCDEF'
     }
   ]);
 
@@ -212,7 +223,7 @@ function InvestidorDashboard() {
   const renderEmprestimosFuturos = () => (
     <div style={{ padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-        💰 Empréstimos Futuros
+        {t('investor.futureLoans.title')}
       </h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
@@ -226,11 +237,11 @@ function InvestidorDashboard() {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             marginBottom: '20px'
           }}>
-            <h3 style={{ color: '#333', marginBottom: '15px' }}>Filtros</h3>
+            <h3 style={{ color: '#333', marginBottom: '15px' }}>{t('investor.filters.title')}</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  Construtora:
+                  {t('investor.filters.constructor')}:
                 </label>
                 <input
                   type="text"
@@ -248,7 +259,7 @@ function InvestidorDashboard() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  APY Mínimo (%):
+                  {t('investor.filters.apyMin')}:
                 </label>
                 <input
                   type="number"
@@ -298,6 +309,14 @@ function InvestidorDashboard() {
                     <p style={{ color: '#666', marginBottom: '5px' }}>
                       <strong>Note Token:</strong> {emprestimo.noteToken}
                     </p>
+                    
+                    {/* Endereço da Carteira da Empresa */}
+                    <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                      <strong style={{ color: '#666', fontSize: '14px' }}>🏢 Carteira da Empresa:</strong>
+                      <p style={{ margin: '5px 0', color: '#333', fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                        {emprestimo.companyWallet}
+                      </p>
+                    </div>
                   </div>
                   
                   <div style={{ textAlign: 'right' }}>
@@ -349,7 +368,7 @@ function InvestidorDashboard() {
                       onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#059669'}
                       onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#10b981'}
                     >
-                      💰 Investir
+                      {t('investor.futureLoans.invest')}
                     </button>
                   </div>
                 </div>
@@ -384,34 +403,34 @@ function InvestidorDashboard() {
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                   marginBottom: '20px'
                 }}>
-                  <h3 style={{ color: '#333', marginBottom: '20px' }}>📝 Assinatura do Contrato</h3>
+                  <h3 style={{ color: '#333', marginBottom: '20px' }}>{t('investor.sign.title')}</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>Nome:</strong> {selectedEmprestimo.nomeEmprestimo}
+                      <strong>{t('investor.sign.name')}</strong> {selectedEmprestimo.nomeEmprestimo}
                     </p>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>Construtora:</strong> {selectedEmprestimo.construtora}
+                      <strong>{t('investor.sign.constructor')}:</strong> {selectedEmprestimo.construtora}
                     </p>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>Token:</strong> {selectedEmprestimo.nomeToken}
+                      <strong>{t('investor.sign.token')}:</strong> {selectedEmprestimo.nomeToken}
                     </p>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>Localização:</strong> {selectedEmprestimo.localizacao}
+                      <strong>{t('investor.sign.location')}:</strong> {selectedEmprestimo.localizacao}
                     </p>
                   </div>
                   <div>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>APY:</strong> {selectedEmprestimo.porcentagemAPY}%
+                      <strong>{t('investor.sign.apy')}:</strong> {selectedEmprestimo.porcentagemAPY}%
                     </p>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>Prazo:</strong> {selectedEmprestimo.prazo} meses
+                      <strong>{t('investor.sign.term')}:</strong> {selectedEmprestimo.prazo} meses
                     </p>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>Preço por Token:</strong> ${selectedEmprestimo.precoParte}
+                      <strong>{t('investor.sign.price')}:</strong> ${selectedEmprestimo.precoParte}
                     </p>
                     <p style={{ margin: '8px 0', color: '#666' }}>
-                      <strong>Valor Total:</strong> ${parseInt(selectedEmprestimo.valorTotal).toLocaleString()}
+                      <strong>{t('investor.sign.total')}:</strong> ${parseInt(selectedEmprestimo.valorTotal).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -423,10 +442,10 @@ function InvestidorDashboard() {
                   borderRadius: '15px', 
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                 }}>
-                  <h3 style={{ color: '#333', marginBottom: '20px' }}>Valor do Investimento</h3>
+                  <h3 style={{ color: '#333', marginBottom: '20px' }}>{t('investor.invest.title')}</h3>
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Valor a Investir (USDC):
+                    {t('investor.invest.amount')}:
                   </label>
                   <input
                     type="number"
@@ -454,18 +473,18 @@ function InvestidorDashboard() {
                     border: '2px solid #0ea5e9',
                     marginBottom: '20px'
                   }}>
-                    <h4 style={{ color: '#0c4a6e', marginBottom: '10px' }}>Resumo do Investimento</h4>
+                    <h4 style={{ color: '#0c4a6e', marginBottom: '10px' }}>{t('investor.invest.summary')}</h4>
                     <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                      <strong>Valor Investido:</strong> ${parseFloat(valorInvestimento).toLocaleString()}
+                      <strong>{t('investor.invest.invested')}:</strong> ${parseFloat(valorInvestimento).toLocaleString()}
                     </p>
                     <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                      <strong>Tokens a Receber:</strong> {Math.floor(parseFloat(valorInvestimento) / parseFloat(selectedEmprestimo.precoParte)).toLocaleString()}
+                      <strong>{t('investor.invest.tokens')}:</strong> {Math.floor(parseFloat(valorInvestimento) / parseFloat(selectedEmprestimo.precoParte)).toLocaleString()}
                     </p>
                     <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                      <strong>Juros Anuais:</strong> ${(parseFloat(valorInvestimento) * parseFloat(selectedEmprestimo.porcentagemAPY) / 100).toFixed(2)}
+                      <strong>{t('investor.invest.interest')}:</strong> ${(parseFloat(valorInvestimento) * parseFloat(selectedEmprestimo.porcentagemAPY) / 100).toFixed(2)}
                     </p>
                     <p style={{ color: '#0c4a6e', margin: '5px 0' }}>
-                      <strong>Total ao Final:</strong> ${(parseFloat(valorInvestimento) * (1 + parseFloat(selectedEmprestimo.porcentagemAPY) / 100)).toFixed(2)}
+                      <strong>{t('investor.invest.final')}:</strong> ${(parseFloat(valorInvestimento) * (1 + parseFloat(selectedEmprestimo.porcentagemAPY) / 100)).toFixed(2)}
                     </p>
                   </div>
                 )}
@@ -487,7 +506,7 @@ function InvestidorDashboard() {
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  {isSubmitting ? '⏳ Processando...' : '✍️ Assinar Contrato e Investir'}
+                  {isSubmitting ? '⏳ Processing...' : t('investor.invest.submit')}
                 </button>
                 </div>
               </form>
@@ -512,7 +531,7 @@ function InvestidorDashboard() {
   const renderHistorico = () => (
     <div style={{ padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '30px', fontSize: '2rem' }}>
-        📊 Histórico de Investimentos
+        {t('investor.history.title')}
       </h2>
 
       {/* Resumo */}
@@ -554,7 +573,7 @@ function InvestidorDashboard() {
       {/* Contratos Ativos */}
       <div style={{ marginBottom: '30px' }}>
         <h3 style={{ color: '#059669', marginBottom: '20px', fontSize: '1.5rem' }}>
-          🟢 Contratos Ativos
+          {t('investor.history.active')}
         </h3>
         {contratosAtivos.map(contrato => (
           <div key={contrato.id} style={{ 
@@ -575,8 +594,16 @@ function InvestidorDashboard() {
                 fontSize: '12px',
                 fontWeight: 'bold'
               }}>
-                ATIVO
+                {t('status.active')}
               </span>
+            </div>
+
+            {/* Endereço da Carteira da Empresa */}
+            <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              <strong style={{ color: '#666', fontSize: '14px' }}>🏢 Carteira da Empresa:</strong>
+              <p style={{ margin: '5px 0', color: '#333', fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                {contrato.companyWallet}
+              </p>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
@@ -621,7 +648,7 @@ function InvestidorDashboard() {
       {/* Contratos Finalizados */}
       <div>
         <h3 style={{ color: '#6b7280', marginBottom: '20px', fontSize: '1.5rem' }}>
-          ✅ Contratos Finalizados
+          {t('investor.history.completed')}
         </h3>
         {contratosFinalizados.map(contrato => (
           <div key={contrato.id} style={{ 
@@ -642,8 +669,16 @@ function InvestidorDashboard() {
                 fontSize: '12px',
                 fontWeight: 'bold'
               }}>
-                FINALIZADO
+                {t('status.completed')}
               </span>
+            </div>
+
+            {/* Endereço da Carteira da Empresa */}
+            <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              <strong style={{ color: '#666', fontSize: '14px' }}>🏢 Carteira da Empresa:</strong>
+              <p style={{ margin: '5px 0', color: '#333', fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                {contrato.companyWallet}
+              </p>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
@@ -690,71 +725,190 @@ function InvestidorDashboard() {
   );
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f8fafc',
-      fontFamily: 'Arial, sans-serif'
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%)',
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
     }}>
+
+      {/* Background Pattern */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                         radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                         radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)`,
+        animation: 'float 20s ease-in-out infinite',
+        pointerEvents: 'none'
+      }} />
+
       {/* Header */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '20px', 
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '20px'
+      <header style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        padding: '20px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        zIndex: 10
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ color: '#333', margin: 0, fontSize: '2rem' }}>
-              💰 Dashboard Investidor - RealYield
-            </h1>
-            {sorobanContext.address && (
-              <p style={{ color: '#666', margin: '5px 0 0 0', fontSize: '14px' }}>
-                🔗 Carteira: {sorobanContext.address.slice(0, 8)}...{sorobanContext.address.slice(-8)}
-              </p>
-            )}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #4C8BF5 0%, #8b5cf6 100%)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: 'white',
+            boxShadow: '0 8px 32px rgba(76, 139, 245, 0.3)'
+          }}>
+            I
           </div>
-          <button 
-            onClick={handleBackToRealYield}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#6b7280',
+          <div>
+            <h3 style={{
               color: 'white',
-              border: 'none',
-              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: '700',
+              margin: 0,
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              {t('investor.title')}
+            </h3>
+            <p style={{
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '12px',
+              margin: 0,
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}>
+              Powered by Stellar
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={toggleLocale}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '20px',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.2)';
+              target.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              target.style.transform = 'scale(1)';
             }}
           >
-            ← Voltar para RealYield
+            {t('common.toggleLanguage')}
+          </button>
+          <button
+            onClick={handleBackToRealYield}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.2)';
+              target.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              target.style.transform = 'scale(1)';
+            }}
+          >
+            {t('common.back')}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Navigation Tabs */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '0 20px', 
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        marginBottom: '20px'
+      <div style={{
+        position: 'absolute',
+        top: '80px',
+        left: '40px',
+        right: '40px',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        padding: '16px 24px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        zIndex: 10
       }}>
-        <div style={{ display: 'flex', gap: '0' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           {[
-            { id: 'emprestimos', label: '💰 Empréstimos & Contratos', icon: '💰' },
-            { id: 'historico', label: '📊 Histórico', icon: '📊' }
+            { id: 'emprestimos', label: t('tabs.loans_investor'), icon: '💰' },
+            { id: 'historico', label: t('tabs.history'), icon: '📊' }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as DashboardTab)}
               style={{
-                padding: '15px 25px',
-                backgroundColor: activeTab === tab.id ? '#3b82f6' : 'transparent',
-                color: activeTab === tab.id ? 'white' : '#6b7280',
+                padding: '12px 20px',
+                backgroundColor: activeTab === tab.id ? 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)' : 'transparent',
+                background: activeTab === tab.id ? 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)' : 'transparent',
+                color: activeTab === tab.id ? 'white' : 'rgba(107, 114, 128, 0.8)',
                 border: 'none',
+                borderRadius: '12px',
                 cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-                borderBottom: activeTab === tab.id ? '3px solid #2563eb' : '3px solid transparent',
-                transition: 'all 0.3s ease'
+                fontSize: '14px',
+                fontWeight: activeTab === tab.id ? '600' : '500',
+                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                boxShadow: activeTab === tab.id ? '0 8px 24px rgba(59, 130, 246, 0.4)' : 'none',
+                transform: activeTab === tab.id ? 'scale(1.05)' : 'scale(1)'
+              }}
+              onMouseOver={(e) => {
+                if (activeTab !== tab.id) {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  target.style.color = 'rgba(255, 255, 255, 0.9)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (activeTab !== tab.id) {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.backgroundColor = 'transparent';
+                  target.style.color = 'rgba(107, 114, 128, 0.8)';
+                }
               }}
             >
               {tab.label}
@@ -764,10 +918,18 @@ function InvestidorDashboard() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <main style={{
+        marginTop: '140px',
+        padding: '40px',
+        position: 'relative',
+        zIndex: 5
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {activeTab === 'emprestimos' && renderEmprestimosFuturos()}
         {activeTab === 'historico' && renderHistorico()}
-      </div>
+        </div>
+      </main>
+
     </div>
   );
 }

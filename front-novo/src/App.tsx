@@ -2,11 +2,13 @@ import { useState } from 'react';
 // import { useSorobanReact } from '@soroban-react/core';
 import EmpresaDashboard from './components/EmpresaDashboard';
 import InvestidorDashboard from './components/InvestidorDashboard';
+import { useI18n } from './i18n/index';
 
 type AppState = 'realyield' | 'empresa' | 'investidor';
 
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('realyield');
+  const { t, toggleLocale } = useI18n();
   // const [isConnecting, setIsConnecting] = useState(false);
   // const [connectionError, setConnectionError] = useState<string | null>(null);
   // const sorobanContext = useSorobanReact();
@@ -54,139 +56,607 @@ function App() {
     return <InvestidorDashboard />;
   }
 
-  // Tela principal RealYield
+  // Tela principal RealYield - Design Criativo e Moderno
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      flexDirection: 'column',
-      padding: '20px',
-      fontFamily: 'Arial, sans-serif'
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%)',
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
     }}>
-      <h1 style={{ 
-        fontSize: '4rem', 
-        color: 'white', 
-        marginBottom: '20px',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+
+      {/* Background Pattern */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                         radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                         radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)`,
+        animation: 'float 20s ease-in-out infinite'
+      }} />
+
+      {/* Header */}
+      <header style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        padding: '20px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        zIndex: 10
       }}>
-        RealYield
-      </h1>
-      <p style={{ 
-        fontSize: '1.2rem', 
-        color: 'white', 
-        textAlign: 'center',
-        marginBottom: '40px',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-      }}>
-        Plataforma de tokenização de imóveis na rede Stellar
-      </p>
-      
-      <div style={{ 
-        display: 'flex', 
-        gap: '20px', 
-        justifyContent: 'center', 
-        flexWrap: 'wrap',
-        maxWidth: '600px',
-        width: '100%'
-      }}>
-        <button 
-          onClick={handleSelectEmpresa}
-          // disabled={isConnecting}
-          style={{
-            padding: '20px 40px',
-            backgroundColor: '#8b5cf6', // isConnecting ? '#9ca3af' : '#8b5cf6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            fontSize: '18px',
-            cursor: 'pointer', // isConnecting ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold',
-            boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
-            flex: '1',
-            minWidth: '200px',
-            transition: 'transform 0.2s'
-          }}
-          onMouseOver={(e) => {
-            // if (!isConnecting) {
-              (e.target as HTMLButtonElement).style.transform = 'translateY(-2px)';
-            // }
-          }}
-          onMouseOut={(e) => (e.target as HTMLButtonElement).style.transform = 'translateY(0)'}
-        >
-          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>
-            🏢 {/* {isConnecting ? '🔄' : '🏢'} */}
-          </div>
-          <div>Empresa</div> {/* {isConnecting ? 'Conectando...' : 'Empresa'} */}
-          <div style={{ fontSize: '14px', opacity: 0.9, marginTop: '5px' }}>
-            Tokenize seus imóveis {/* {isConnecting ? 'Aguarde...' : 'Tokenize seus imóveis'} */}
-          </div>
-        </button>
-        
-        <button 
-          onClick={handleSelectInvestidor}
-          // disabled={isConnecting}
-          style={{
-            padding: '20px 40px',
-            backgroundColor: '#3b82f6', // isConnecting ? '#9ca3af' : '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            fontSize: '18px',
-            cursor: 'pointer', // isConnecting ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold',
-            boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
-            flex: '1',
-            minWidth: '200px',
-            transition: 'transform 0.2s'
-          }}
-          onMouseOver={(e) => {
-            // if (!isConnecting) {
-              (e.target as HTMLButtonElement).style.transform = 'translateY(-2px)';
-            // }
-          }}
-          onMouseOut={(e) => (e.target as HTMLButtonElement).style.transform = 'translateY(0)'}
-        >
-          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>
-            💰 {/* {isConnecting ? '🔄' : '💰'} */}
-          </div>
-          <div>Investidor</div> {/* {isConnecting ? 'Conectando...' : 'Investidor'} */}
-          <div style={{ fontSize: '14px', opacity: 0.9, marginTop: '5px' }}>
-            Invista em tokens {/* {isConnecting ? 'Aguarde...' : 'Invista em tokens'} */}
-          </div>
-        </button>
-      </div>
-      
-      {/* Mensagem de erro de conexão */}
-      {/* {connectionError && (
-        <div style={{ 
-          maxWidth: '600px',
-          width: '100%',
-          marginTop: '20px',
-          padding: '15px',
-          backgroundColor: 'rgba(220, 53, 69, 0.9)',
-          color: 'white',
-          borderRadius: '8px',
-          textAlign: 'center',
-          fontSize: '14px'
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px'
         }}>
-          ⚠️ {connectionError}
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #4C8BF5 0%, #8b5cf6 100%)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: 'white',
+            boxShadow: '0 8px 32px rgba(76, 139, 245, 0.3)'
+          }}>
+            R
+          </div>
+          <div>
+            <h3 style={{
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: '700',
+              margin: 0,
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              RealYield
+            </h3>
+            <p style={{
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '12px',
+              margin: 0,
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}>
+              Powered by Stellar
+            </p>
+          </div>
         </div>
-      )} */}
-      
-      <div style={{ 
-        color: 'white', 
-        fontSize: '14px',
-        opacity: 0.8,
-        marginTop: '40px',
-        textAlign: 'center'
+
+        <button
+          onClick={toggleLocale}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(10px)',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '20px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+          }}
+          onMouseOver={(e) => {
+            const target = e.target as HTMLButtonElement;
+            target.style.backgroundColor = 'rgba(255,255,255,0.2)';
+            target.style.transform = 'scale(1.05)';
+          }}
+          onMouseOut={(e) => {
+            const target = e.target as HTMLButtonElement;
+            target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+            target.style.transform = 'scale(1)';
+          }}
+        >
+          {t('common.toggleLanguage')}
+        </button>
+      </header>
+
+      {/* Main Content */}
+      <main style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        padding: '120px 20px 60px',
+        position: 'relative',
+        zIndex: 5
       }}>
-        Powered by Stellar Network
-      </div>
+
+        {/* Hero Section */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '60px',
+          animation: 'fadeInUp 1s ease-out'
+        }}>
+          <h1 style={{
+            fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+            fontWeight: '800',
+            color: 'white',
+            marginBottom: '20px',
+            background: 'linear-gradient(135deg, #4C8BF5 0%, #8b5cf6 50%, #10b981 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundSize: '200% 200%',
+            animation: 'gradientShift 4s ease-in-out infinite',
+            textShadow: '0 0 40px rgba(76, 139, 245, 0.3)'
+          }}>
+            {t('landing.hero.title')}
+          </h1>
+
+          <p style={{
+            fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+            color: 'rgba(255,255,255,0.9)',
+            marginBottom: '40px',
+            maxWidth: '600px',
+            lineHeight: '1.6',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            {t('landing.hero.subtitle')}
+          </p>
+
+          <div style={{
+            display: 'flex',
+            gap: '15px',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            marginBottom: '20px'
+          }}>
+            <span style={{
+              padding: '6px 12px',
+              backgroundColor: 'rgba(76, 139, 245, 0.2)',
+              color: '#4C8BF5',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '600',
+              border: '1px solid rgba(76, 139, 245, 0.3)'
+            }}>
+              {t('landing.hero.tagline1')}
+            </span>
+            <span style={{
+              padding: '6px 12px',
+              backgroundColor: 'rgba(139, 92, 246, 0.2)',
+              color: '#8b5cf6',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '600',
+              border: '1px solid rgba(139, 92, 246, 0.3)'
+            }}>
+              {t('landing.hero.tagline2')}
+            </span>
+            <span style={{
+              padding: '6px 12px',
+              backgroundColor: 'rgba(16, 185, 129, 0.2)',
+              color: '#10b981',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '600',
+              border: '1px solid rgba(16, 185, 129, 0.3)'
+            }}>
+              {t('landing.hero.tagline3')}
+            </span>
+          </div>
+        </div>
+
+        {/* Cards Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '30px',
+          maxWidth: '1000px',
+          width: '100%',
+          marginBottom: '60px'
+        }}>
+
+          {/* Empresa Card */}
+          <div
+            onClick={handleSelectEmpresa}
+            style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '24px',
+              padding: '40px 30px',
+              cursor: 'pointer',
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              animation: 'slideInLeft 0.8s ease-out'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-10px) scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 40px 100px rgba(139, 92, 246, 0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.1)';
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: 'linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%)',
+              borderRadius: '24px 24px 0 0'
+            }} />
+
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '30px'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '36px',
+                margin: '0 auto 20px',
+                boxShadow: '0 12px 32px rgba(139, 92, 246, 0.3)'
+              }}>
+                🏢
+              </div>
+              <h3 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#1f2937',
+                margin: '0 0 10px 0'
+              }}>
+                {t('landing.company.title')}
+              </h3>
+              <p style={{
+                fontSize: '16px',
+                color: '#6b7280',
+                margin: 0,
+                lineHeight: '1.5'
+              }}>
+                {t('landing.company.description')}
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gap: '15px',
+              marginBottom: '30px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '14px',
+                color: '#4b5563'
+              }}>
+                <span style={{ color: '#10b981' }}>✓</span>
+                <span>{t('landing.company.feature1')}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '14px',
+                color: '#4b5563'
+              }}>
+                <span style={{ color: '#10b981' }}>✓</span>
+                <span>{t('landing.company.feature2')}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '14px',
+                color: '#4b5563'
+              }}>
+                <span style={{ color: '#10b981' }}>✓</span>
+                <span>{t('landing.company.feature3')}</span>
+              </div>
+            </div>
+
+            <button style={{
+              width: '100%',
+              padding: '16px 24px',
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 8px 24px rgba(139, 92, 246, 0.4)'
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = 'translateY(-2px)';
+              target.style.boxShadow = '0 12px 32px rgba(139, 92, 246, 0.5)';
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = 'translateY(0)';
+              target.style.boxShadow = '0 8px 24px rgba(139, 92, 246, 0.4)';
+            }}
+            >
+              {t('landing.company.button')}
+            </button>
+          </div>
+
+          {/* Investidor Card */}
+          <div
+            onClick={handleSelectInvestidor}
+            style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '24px',
+              padding: '40px 30px',
+              cursor: 'pointer',
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              animation: 'slideInRight 0.8s ease-out'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-10px) scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 40px 100px rgba(59, 130, 246, 0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.1)';
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: 'linear-gradient(90deg, #4C8BF5 0%, #2563eb 100%)',
+              borderRadius: '24px 24px 0 0'
+            }} />
+
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '30px'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '36px',
+                margin: '0 auto 20px',
+                boxShadow: '0 12px 32px rgba(59, 130, 246, 0.3)'
+              }}>
+                💰
+              </div>
+              <h3 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#1f2937',
+                margin: '0 0 10px 0'
+              }}>
+                {t('landing.investor.title')}
+              </h3>
+              <p style={{
+                fontSize: '16px',
+                color: '#6b7280',
+                margin: 0,
+                lineHeight: '1.5'
+              }}>
+                {t('landing.investor.description')}
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gap: '15px',
+              marginBottom: '30px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '14px',
+                color: '#4b5563'
+              }}>
+                <span style={{ color: '#10b981' }}>✓</span>
+                <span>{t('landing.investor.feature1')}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '14px',
+                color: '#4b5563'
+              }}>
+                <span style={{ color: '#10b981' }}>✓</span>
+                <span>{t('landing.investor.feature2')}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '14px',
+                color: '#4b5563'
+              }}>
+                <span style={{ color: '#10b981' }}>✓</span>
+                <span>{t('landing.investor.feature3')}</span>
+              </div>
+            </div>
+
+            <button style={{
+              width: '100%',
+              padding: '16px 24px',
+              background: 'linear-gradient(135deg, #4C8BF5 0%, #2563eb 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)'
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = 'translateY(-2px)';
+              target.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.5)';
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = 'translateY(0)';
+              target.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.4)';
+            }}
+            >
+              {t('landing.investor.button')}
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '30px',
+          maxWidth: '800px',
+          width: '100%',
+          marginBottom: '40px'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            animation: 'fadeInUp 1.2s ease-out'
+          }}>
+            <div style={{
+              fontSize: '36px',
+              fontWeight: '800',
+              color: '#4C8BF5',
+              marginBottom: '8px'
+            }}>
+              $2.5M+
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: 'rgba(255,255,255,0.8)',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>
+              {t('landing.stats.totalRaised')}
+            </div>
+          </div>
+
+          <div style={{
+            textAlign: 'center',
+            animation: 'fadeInUp 1.4s ease-out'
+          }}>
+            <div style={{
+              fontSize: '36px',
+              fontWeight: '800',
+              color: '#8b5cf6',
+              marginBottom: '8px'
+            }}>
+              500+
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: 'rgba(255,255,255,0.8)',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>
+              {t('landing.stats.properties')}
+            </div>
+          </div>
+
+          <div style={{
+            textAlign: 'center',
+            animation: 'fadeInUp 1.6s ease-out'
+          }}>
+            <div style={{
+              fontSize: '36px',
+              fontWeight: '800',
+              color: '#10b981',
+              marginBottom: '8px'
+            }}>
+              12%
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: 'rgba(255,255,255,0.8)',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>
+              {t('landing.stats.avgApy')}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer style={{
+        position: 'absolute',
+        bottom: '20px',
+        left: '20px',
+        right: '20px',
+        textAlign: 'center',
+        zIndex: 5
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          marginBottom: '10px'
+        }}>
+          <div style={{
+            width: '24px',
+            height: '24px',
+            background: 'linear-gradient(135deg, #4C8BF5 0%, #8b5cf6 100%)',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: 'white'
+          }}>
+            S
+          </div>
+          <span style={{
+            color: 'rgba(255,255,255,0.7)',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            {t('landing.footer.powered')}
+          </span>
+        </div>
+        <p style={{
+          color: 'rgba(255,255,255,0.5)',
+          fontSize: '12px',
+          margin: 0
+        }}>
+          {t('landing.footer.tagline')}
+        </p>
+      </footer>
+
     </div>
   );
 }
