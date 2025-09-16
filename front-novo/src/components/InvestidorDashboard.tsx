@@ -295,24 +295,24 @@ function InvestidorDashboard() {
                       {emprestimo.nomeEmprestimo}
                     </h3>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Construtora:</strong> {emprestimo.construtora}
+                      <strong>{t('investor.futureLoans.list.constructor')}</strong> {emprestimo.construtora}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Token:</strong> {emprestimo.nomeToken} - {emprestimo.complexoConstrutora}
+                      <strong>{t('investor.futureLoans.list.token')}</strong> {emprestimo.nomeToken} - {emprestimo.complexoConstrutora}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Localização:</strong> {emprestimo.localizacao}
+                      <strong>{t('investor.futureLoans.list.location')}</strong> {emprestimo.localizacao}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Prazo:</strong> {emprestimo.prazo} meses
+                      <strong>{t('investor.futureLoans.list.term')}</strong> {emprestimo.prazo} {t('common.months')}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Note Token:</strong> {emprestimo.noteToken}
+                      <strong>{t('investor.futureLoans.list.noteToken')}</strong> {emprestimo.noteToken}
                     </p>
                     
                     {/* Endereço da Carteira da Empresa */}
                     <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                      <strong style={{ color: '#666', fontSize: '14px' }}>🏢 Carteira da Empresa:</strong>
+                      <strong style={{ color: '#666', fontSize: '14px' }}>{t('investor.futureLoans.list.companyWallet')}</strong>
                       <p style={{ margin: '5px 0', color: '#333', fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                         {emprestimo.companyWallet}
                       </p>
@@ -343,10 +343,10 @@ function InvestidorDashboard() {
                       marginBottom: '15px'
                     }}>
                       <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
-                        <strong>Progresso:</strong> {emprestimo.porcentagemConclusao}
+                        <strong>{t('investor.futureLoans.list.progress')}</strong> {emprestimo.porcentagemConclusao}
                       </p>
                       <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
-                        <strong>Tokens Restantes:</strong> {parseInt(emprestimo.tokensRestantes).toLocaleString()}
+                        <strong>{t('investor.futureLoans.list.tokensRemaining')}</strong> {parseInt(emprestimo.tokensRestantes).toLocaleString()}
                       </p>
                     </div>
                     
@@ -518,7 +518,7 @@ function InvestidorDashboard() {
               borderRadius: '15px',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}>
-              <h3 style={{ color: '#333', margin: 0 }}>Selecione um empréstimo para investir</h3>
+              <h3 style={{ color: '#333', margin: 0 }}>{t('investor.futureLoans.selectPrompt')}</h3>
             </div>
           )}
         </div>
