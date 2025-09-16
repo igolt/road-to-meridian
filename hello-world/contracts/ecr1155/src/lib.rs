@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractimpl, contracttype, panic_with_error, Address, Bytes, Env, Map, String,
+    contract, contractimpl, contracttype, panic_with_error, Address, Env, Map, String,
 };
 
 #[contract]
@@ -108,7 +108,7 @@ impl RealEstateTokenContract {
             .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
         property
     }
-    
+
 
     pub fn transfer_property(
         env: Env,
@@ -118,7 +118,7 @@ impl RealEstateTokenContract {
         amount: i128,
     ) {
         from.require_auth();
-        
+
         if amount <= 0 {
             panic_with_error!(&env, Error::InsufficientBalance);
         }
