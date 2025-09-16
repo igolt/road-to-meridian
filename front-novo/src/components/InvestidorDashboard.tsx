@@ -70,7 +70,7 @@ function InvestidorDashboard() {
       precoParte: '0.50',
       porcentagemAPY: '12.5',
       valorTotal: '1000000',
-      prazo: '24',
+      prazo: '12',
       localizacao: 'São Paulo, SP'
     },
     {
@@ -85,7 +85,7 @@ function InvestidorDashboard() {
       precoParte: '1.00',
       porcentagemAPY: '15.0',
       valorTotal: '2000000',
-      prazo: '36',
+      prazo: '12',
       localizacao: 'Rio de Janeiro, RJ'
     },
     {
@@ -100,7 +100,7 @@ function InvestidorDashboard() {
       precoParte: '0.75',
       porcentagemAPY: '10.0',
       valorTotal: '1500000',
-      prazo: '18',
+      prazo: '12',
       localizacao: 'Belo Horizonte, MG'
     }
   ]);

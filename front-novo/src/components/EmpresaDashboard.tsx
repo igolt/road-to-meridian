@@ -12,6 +12,7 @@ interface RWAFormData {
   expectedCompletion: string;
   expectedAmount: string;
   interestRate: string;
+  prazo: string;
 }
 
 interface Contract {
@@ -46,7 +47,8 @@ function EmpresaDashboard() {
     location: '',
     expectedCompletion: '',
     expectedAmount: '',
-    interestRate: ''
+    interestRate: '',
+    prazo: '12'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
@@ -114,6 +116,7 @@ function EmpresaDashboard() {
     if (!rwaForm.expectedCompletion.trim()) errors.push('Data de vencimento é obrigatória');
     if (!rwaForm.expectedAmount.trim()) errors.push('Valor esperado é obrigatório');
     if (!rwaForm.interestRate.trim()) errors.push('Taxa de juros é obrigatória');
+    if (!rwaForm.prazo.trim()) errors.push('Prazo do empréstimo é obrigatório');
     if (!rwaForm.propertyURI.trim()) errors.push('URI do IPFS é obrigatória');
     
     // Validações numéricas
@@ -125,6 +128,9 @@ function EmpresaDashboard() {
     }
     if (rwaForm.interestRate && isNaN(Number(rwaForm.interestRate))) {
       errors.push('Taxa de juros deve ser um número válido');
+    }
+    if (rwaForm.prazo && isNaN(Number(rwaForm.prazo))) {
+      errors.push('Prazo deve ser um número válido');
     }
     
     return errors;
@@ -149,6 +155,7 @@ function EmpresaDashboard() {
         totalSupply: Number(rwaForm.totalSupply),
         expectedAmount: Number(rwaForm.expectedAmount),
         interestRate: Number(rwaForm.interestRate),
+        prazo: Number(rwaForm.prazo),
         companyWallet: sorobanContext.address || 'DEMO_WALLET',
         timestamp: new Date().toISOString()
       };
@@ -171,7 +178,8 @@ function EmpresaDashboard() {
         location: '',
         expectedCompletion: '',
         expectedAmount: '',
-        interestRate: ''
+        interestRate: '',
+        prazo: '12'
       });
       
     } catch (error) {
@@ -510,6 +518,30 @@ function EmpresaDashboard() {
                   />
                 </div>
                 
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                    Prazo do Empréstimo (meses)
+                  </label>
+                  <input
+                    type="number"
+                    value={rwaForm.prazo}
+                    onChange={(e) => handleRWAFormChange('prazo', e.target.value)}
+                    placeholder="12"
+                    required
+                    min="1"
+                    max="60"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                     Valor Total com Juros (USDC)
