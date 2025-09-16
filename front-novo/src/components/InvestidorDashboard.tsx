@@ -51,6 +51,7 @@ interface ContratoFinalizado {
 type DashboardTab = 'emprestimos' | 'historico';
 
 function InvestidorDashboard() {
+  // Wallet (comentado para permitir execução sem extensão)
   // const { address } = useWallet();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emprestimos');
@@ -191,7 +192,7 @@ function InvestidorDashboard() {
         emprestimoId: selectedEmprestimo.id,
         valorInvestimento: parseFloat(valorInvestimento),
         tokensAReceber: Math.floor(parseFloat(valorInvestimento) / parseFloat(selectedEmprestimo.precoParte)),
-        // investorWallet: address || 'DEMO_WALLET',
+        // investorWallet: address || 'DEMO_WALLET' // <- reative quando a carteira estiver disponível
         investorWallet: 'DEMO_WALLET',
         timestamp: new Date().toISOString(),
         emprestimo: selectedEmprestimo

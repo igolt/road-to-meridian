@@ -7,7 +7,18 @@ import { LanguageProvider } from './i18n/index.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {/* SorobanProvider desabilitado para acesso sem carteira */}
+    {/*
+      Observação: Bloco original com carteira Freighter/Soroban.
+      Deixe-o comentado para poder rodar sem a extensão e reativar depois.
+
+      <SorobanProvider>
+        <LanguageProvider>
+          <App />
+        </LanguageProvider>
+      </SorobanProvider>
+    */}
+
+    {/* Execução atual sem provider de carteira */}
     <LanguageProvider>
       <App />
     </LanguageProvider>

@@ -39,6 +39,7 @@ interface Contract {
 type DashboardTab = 'emissao' | 'contratos' | 'metricas';
 
 function EmpresaDashboard() {
+  // Wallet (comentado para permitir execução sem extensão)
   // const { address } = useWallet();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emissao');
@@ -168,7 +169,7 @@ function EmpresaDashboard() {
         expectedAmount: Number(rwaForm.expectedAmount),
         interestRate: Number(rwaForm.interestRate),
         prazo: Number(rwaForm.prazo),
-        // companyWallet: address || 'DEMO_WALLET',
+        // companyWallet: address || 'DEMO_WALLET'  // <- reative quando a carteira estiver disponível
         companyWallet: 'DEMO_WALLET',
         timestamp: new Date().toISOString()
       };
