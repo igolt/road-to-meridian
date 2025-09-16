@@ -295,24 +295,24 @@ function InvestidorDashboard() {
                       {emprestimo.nomeEmprestimo}
                     </h3>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Construtora:</strong> {emprestimo.construtora}
+                      <strong>{t('investor.futureLoans.list.constructor')}</strong> {emprestimo.construtora}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Token:</strong> {emprestimo.nomeToken} - {emprestimo.complexoConstrutora}
+                      <strong>{t('investor.futureLoans.list.token')}</strong> {emprestimo.nomeToken} - {emprestimo.complexoConstrutora}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Localização:</strong> {emprestimo.localizacao}
+                      <strong>{t('investor.futureLoans.list.location')}</strong> {emprestimo.localizacao}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Prazo:</strong> {emprestimo.prazo} meses
+                      <strong>{t('investor.futureLoans.list.term')}</strong> {emprestimo.prazo} {t('common.months')}
                     </p>
                     <p style={{ color: '#666', marginBottom: '5px' }}>
-                      <strong>Note Token:</strong> {emprestimo.noteToken}
+                      <strong>{t('investor.futureLoans.list.noteToken')}</strong> {emprestimo.noteToken}
                     </p>
                     
                     {/* Endereço da Carteira da Empresa */}
                     <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                      <strong style={{ color: '#666', fontSize: '14px' }}>🏢 Carteira da Empresa:</strong>
+                      <strong style={{ color: '#666', fontSize: '14px' }}>{t('investor.futureLoans.list.companyWallet')}</strong>
                       <p style={{ margin: '5px 0', color: '#333', fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                         {emprestimo.companyWallet}
                       </p>
@@ -343,10 +343,10 @@ function InvestidorDashboard() {
                       marginBottom: '15px'
                     }}>
                       <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
-                        <strong>Progresso:</strong> {emprestimo.porcentagemConclusao}
+                        <strong>{t('investor.futureLoans.list.progress')}</strong> {emprestimo.porcentagemConclusao}
                       </p>
                       <p style={{ color: '#92400e', margin: '5px 0', fontSize: '14px' }}>
-                        <strong>Tokens Restantes:</strong> {parseInt(emprestimo.tokensRestantes).toLocaleString()}
+                        <strong>{t('investor.futureLoans.list.tokensRemaining')}</strong> {parseInt(emprestimo.tokensRestantes).toLocaleString()}
                       </p>
                     </div>
                     
@@ -518,7 +518,7 @@ function InvestidorDashboard() {
               borderRadius: '15px',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}>
-              <h3 style={{ color: '#333', margin: 0 }}>Selecione um empréstimo para investir</h3>
+              <h3 style={{ color: '#333', margin: 0 }}>{t('investor.futureLoans.selectPrompt')}</h3>
             </div>
           )}
         </div>
@@ -534,7 +534,7 @@ function InvestidorDashboard() {
         {t('investor.history.title')}
       </h2>
 
-      {/* Resumo */}
+      {/* Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
         <div style={{ 
           backgroundColor: '#fef3c7', 
@@ -542,15 +542,15 @@ function InvestidorDashboard() {
           borderRadius: '10px',
           border: '2px solid #f59e0b'
         }}>
-          <h3 style={{ color: '#92400e', marginBottom: '10px' }}>📊 Resumo Geral</h3>
+          <h3 style={{ color: '#92400e', marginBottom: '10px' }}>{t('investor.history.summaryTitle')}</h3>
           <p style={{ margin: '5px 0', color: '#92400e' }}>
-            <strong>Contratos Ativos:</strong> {contratosAtivos.length}
+            <strong>{t('investor.history.activeCount')}</strong> {contratosAtivos.length}
           </p>
           <p style={{ margin: '5px 0', color: '#92400e' }}>
-            <strong>Contratos Finalizados:</strong> {contratosFinalizados.length}
+            <strong>{t('investor.history.completedCount')}</strong> {contratosFinalizados.length}
           </p>
           <p style={{ margin: '5px 0', color: '#92400e' }}>
-            <strong>Total Investido:</strong> ${contratosAtivos.reduce((sum, c) => sum + parseFloat(c.valorInvestido), 0).toLocaleString()}
+            <strong>{t('investor.history.totalInvested')}</strong> ${contratosAtivos.reduce((sum, c) => sum + parseFloat(c.valorInvestido), 0).toLocaleString()}
           </p>
         </div>
 
@@ -560,12 +560,12 @@ function InvestidorDashboard() {
           borderRadius: '10px',
           border: '2px solid #3b82f6'
         }}>
-          <h3 style={{ color: '#1e40af', marginBottom: '10px' }}>💰 Retornos</h3>
+          <h3 style={{ color: '#1e40af', marginBottom: '10px' }}>{t('investor.history.returnsTitle')}</h3>
           <p style={{ margin: '5px 0', color: '#1e40af' }}>
-            <strong>Juros Acumulados:</strong> ${contratosAtivos.reduce((sum, c) => sum + parseFloat(c.jurosAcumulados), 0).toLocaleString()}
+            <strong>{t('investor.history.accumulatedInterest')}</strong> ${contratosAtivos.reduce((sum, c) => sum + parseFloat(c.jurosAcumulados), 0).toLocaleString()}
           </p>
           <p style={{ margin: '5px 0', color: '#1e40af' }}>
-            <strong>Juros Recebidos:</strong> ${contratosFinalizados.reduce((sum, c) => sum + parseFloat(c.jurosRecebidos), 0).toLocaleString()}
+            <strong>{t('investor.history.receivedInterest')}</strong> ${contratosFinalizados.reduce((sum, c) => sum + parseFloat(c.jurosRecebidos), 0).toLocaleString()}
           </p>
         </div>
       </div>
@@ -598,9 +598,9 @@ function InvestidorDashboard() {
               </span>
             </div>
 
-            {/* Endereço da Carteira da Empresa */}
+            {/* Company Wallet Address */}
             <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-              <strong style={{ color: '#666', fontSize: '14px' }}>🏢 Carteira da Empresa:</strong>
+              <strong style={{ color: '#666', fontSize: '14px' }}>{t('investor.common.companyWallet')}</strong>
               <p style={{ margin: '5px 0', color: '#333', fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                 {contrato.companyWallet}
               </p>
@@ -608,36 +608,36 @@ function InvestidorDashboard() {
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
               <div>
-                <strong style={{ color: '#666' }}>Construtora:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.constructor')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{contrato.construtora}</p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Valor Investido:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.investedAmount')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>${parseFloat(contrato.valorInvestido).toLocaleString()}</p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Tokens:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.tokens')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{parseInt(contrato.tokensAdquiridos).toLocaleString()}</p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>APY:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.apy')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{contrato.apy}%</p>
               </div>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
               <div>
-                <strong style={{ color: '#666' }}>Juros Acumulados:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.history.accumulatedInterest')}</strong>
                 <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>
                   ${parseFloat(contrato.jurosAcumulados).toLocaleString()}
                 </p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Vencimento:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.maturity')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{contrato.dataVencimento}</p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Início:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.start')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{contrato.dataInicio}</p>
               </div>
             </div>
@@ -673,9 +673,9 @@ function InvestidorDashboard() {
               </span>
             </div>
 
-            {/* Endereço da Carteira da Empresa */}
+            {/* Company Wallet Address */}
             <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-              <strong style={{ color: '#666', fontSize: '14px' }}>🏢 Carteira da Empresa:</strong>
+              <strong style={{ color: '#666', fontSize: '14px' }}>{t('investor.common.companyWallet')}</strong>
               <p style={{ margin: '5px 0', color: '#333', fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                 {contrato.companyWallet}
               </p>
@@ -683,38 +683,38 @@ function InvestidorDashboard() {
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
               <div>
-                <strong style={{ color: '#666' }}>Construtora:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.constructor')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{contrato.construtora}</p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Valor Investido:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.investedAmount')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>${parseFloat(contrato.valorInvestido).toLocaleString()}</p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Tokens:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.tokens')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{parseInt(contrato.tokensAdquiridos).toLocaleString()}</p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>APY:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.apy')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{contrato.apy}%</p>
               </div>
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
               <div>
-                <strong style={{ color: '#666' }}>Juros Recebidos:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.history.receivedInterest')}</strong>
                 <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>
                   ${parseFloat(contrato.jurosRecebidos).toLocaleString()}
                 </p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Total Recebido:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.totalReceived')}</strong>
                 <p style={{ margin: '5px 0', color: '#10b981', fontWeight: 'bold' }}>
                   ${parseFloat(contrato.valorTotalRecebido).toLocaleString()}
                 </p>
               </div>
               <div>
-                <strong style={{ color: '#666' }}>Finalizado em:</strong>
+                <strong style={{ color: '#666' }}>{t('investor.common.finalizedOn')}</strong>
                 <p style={{ margin: '5px 0', color: '#333' }}>{contrato.dataFinalizacao}</p>
               </div>
             </div>

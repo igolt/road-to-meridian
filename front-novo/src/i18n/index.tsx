@@ -8,6 +8,7 @@ const ptBR: Dictionary = {
   'common.back': '← Voltar para RealYield',
   'common.wallet': '🔗 Carteira',
   'common.toggleLanguage': 'EN',
+  'common.months': 'meses',
 
   'tabs.emission': '🏗️ Emissão RWA',
   'tabs.contracts': '📋 Contratos & Empréstimos',
@@ -90,6 +91,22 @@ const ptBR: Dictionary = {
   'investor.filters.constructor': 'Construtora:',
   'investor.filters.apyMin': 'APY Mínimo (%):',
   'investor.futureLoans.invest': '💰 Investir',
+  'investor.futureLoans.list.constructor': 'Construtora:',
+  'investor.futureLoans.list.token': 'Token:',
+  'investor.futureLoans.list.location': 'Localização:',
+  'investor.futureLoans.list.term': 'Prazo:',
+  'investor.futureLoans.list.noteToken': 'Note Token:',
+  'investor.futureLoans.list.companyWallet': '🏢 Carteira da Empresa:',
+  'investor.futureLoans.list.progress': 'Progresso:',
+  'investor.futureLoans.list.tokensRemaining': 'Tokens Restantes:',
+  'investor.futureLoans.selectPrompt': 'Selecione um empréstimo para investir',
+  'investor.futureLoans.list.constructor': 'Construtora:',
+  'investor.futureLoans.list.token': 'Token:',
+  'investor.futureLoans.list.location': 'Localização:',
+  'investor.futureLoans.list.term': 'Prazo:',
+  'investor.futureLoans.list.noteToken': 'Note Token:',
+  'investor.futureLoans.list.companyWallet': '🏢 Carteira da Empresa:',
+  'investor.futureLoans.selectPrompt': 'Selecione um empréstimo para investir',
   'investor.sign.title': '📝 Assinatura do Contrato',
   'investor.sign.name': 'Nome:',
   'investor.sign.constructor': 'Construtora:',
@@ -110,12 +127,29 @@ const ptBR: Dictionary = {
   'investor.history.title': '📊 Histórico de Investimentos',
   'investor.history.active': '🟢 Contratos Ativos',
   'investor.history.completed': '✅ Contratos Finalizados',
+  'investor.history.summaryTitle': '📊 Resumo Geral',
+  'investor.history.activeCount': 'Contratos Ativos:',
+  'investor.history.completedCount': 'Contratos Finalizados:',
+  'investor.history.totalInvested': 'Total Investido:',
+  'investor.history.returnsTitle': '💰 Retornos',
+  'investor.history.accumulatedInterest': 'Juros Acumulados:',
+  'investor.history.receivedInterest': 'Juros Recebidos:',
+  'investor.common.constructor': 'Construtora:',
+  'investor.common.investedAmount': 'Valor Investido:',
+  'investor.common.tokens': 'Tokens:',
+  'investor.common.apy': 'APY:',
+  'investor.common.maturity': 'Vencimento:',
+  'investor.common.start': 'Início:',
+  'investor.common.companyWallet': '🏢 Carteira da Empresa:',
+  'investor.common.totalReceived': 'Total Recebido:',
+  'investor.common.finalizedOn': 'Finalizado em:',
 };
 
 const enUS: Dictionary = {
   'common.back': '← Back to RealYield',
   'common.wallet': '🔗 Wallet',
   'common.toggleLanguage': 'PT',
+  'common.months': 'months',
 
   'tabs.emission': '🏗️ RWA Issuance',
   'tabs.contracts': '📋 Contracts & Loans',
@@ -198,6 +232,15 @@ const enUS: Dictionary = {
   'investor.filters.constructor': 'Constructor:',
   'investor.filters.apyMin': 'Min APY (%):',
   'investor.futureLoans.invest': '💰 Invest',
+  'investor.futureLoans.list.constructor': 'Constructor:',
+  'investor.futureLoans.list.token': 'Token:',
+  'investor.futureLoans.list.location': 'Location:',
+  'investor.futureLoans.list.term': 'Term:',
+  'investor.futureLoans.list.noteToken': 'Note Token:',
+  'investor.futureLoans.list.companyWallet': '🏢 Company Wallet:',
+  'investor.futureLoans.list.progress': 'Progress:',
+  'investor.futureLoans.list.tokensRemaining': 'Tokens Remaining:',
+  'investor.futureLoans.selectPrompt': 'Select a loan to invest',
   'investor.sign.title': '📝 Contract Signature',
   'investor.sign.name': 'Name:',
   'investor.sign.constructor': 'Constructor:',
@@ -221,31 +264,31 @@ const enUS: Dictionary = {
 
   // Landing Page
   'landing.hero.title': 'RealYield',
-  'landing.hero.subtitle': 'Revolucione o investimento imobiliário através da tokenização blockchain na rede Stellar',
-  'landing.hero.tagline1': '🚀 Seguro',
-  'landing.hero.tagline2': '⚡ Rápido',
-  'landing.hero.tagline3': '💎 Transparente',
+  'landing.hero.subtitle': 'Revolutionize real estate investing through blockchain tokenization on the Stellar network',
+  'landing.hero.tagline1': '🚀 Secure',
+  'landing.hero.tagline2': '⚡ Fast',
+  'landing.hero.tagline3': '💎 Transparent',
 
-  'landing.company.title': 'Para Empresas',
-  'landing.company.description': 'Tokenize seus ativos imobiliários e levante capital de forma eficiente',
-  'landing.company.feature1': 'Tokenização segura na Stellar',
-  'landing.company.feature2': 'Acesso global de investidores',
-  'landing.company.feature3': 'Acompanhamento de performance em tempo real',
-  'landing.company.button': 'Começar Tokenização →',
+  'landing.company.title': 'For Companies',
+  'landing.company.description': 'Tokenize your real estate assets and raise capital efficiently',
+  'landing.company.feature1': 'Secure tokenization on Stellar',
+  'landing.company.feature2': 'Global investor access',
+  'landing.company.feature3': 'Real-time performance tracking',
+  'landing.company.button': 'Start Tokenization →',
 
-  'landing.investor.title': 'Para Investidores',
-  'landing.investor.description': 'Descubra oportunidades de imóveis tokenizados com altos retornos',
-  'landing.investor.feature1': 'Portfólio imobiliário diversificado',
-  'landing.investor.feature2': 'Investimento mínimo baixo',
-  'landing.investor.feature3': 'Tokens líquidos e negociáveis',
-  'landing.investor.button': 'Começar Investimento →',
+  'landing.investor.title': 'For Investors',
+  'landing.investor.description': 'Discover tokenized real estate opportunities with high returns',
+  'landing.investor.feature1': 'Diversified real estate portfolio',
+  'landing.investor.feature2': 'Low minimum investment',
+  'landing.investor.feature3': 'Liquid and tradable tokens',
+  'landing.investor.button': 'Start Investing →',
 
-  'landing.stats.totalRaised': 'Total Arrecadado',
-  'landing.stats.properties': 'Propriedades',
-  'landing.stats.avgApy': 'APY Médio',
+  'landing.stats.totalRaised': 'Total Raised',
+  'landing.stats.properties': 'Properties',
+  'landing.stats.avgApy': 'Average APY',
 
   'landing.footer.powered': 'Powered by Stellar Network',
-  'landing.footer.tagline': 'Seguro • Transparente • Eficiente',
+  'landing.footer.tagline': 'Secure • Transparent • Efficient',
 };
 
 type I18nContextType = {
@@ -258,7 +301,13 @@ type I18nContextType = {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocale] = useState<Locale>('pt-BR');
+  const getInitialLocale = (): Locale => {
+    if (typeof window === 'undefined') return 'pt-BR';
+    const saved = localStorage.getItem('locale') as Locale | null;
+    return saved === 'pt-BR' || saved === 'en-US' ? saved : 'pt-BR';
+  };
+
+  const [locale, setLocale] = useState<Locale>(getInitialLocale);
 
   const dict = useMemo(() => (locale === 'pt-BR' ? ptBR : enUS), [locale]);
 
@@ -269,6 +318,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const toggleLocale = useCallback(() => {
     setLocale(prev => (prev === 'pt-BR' ? 'en-US' : 'pt-BR'));
   }, []);
+
+  // Persistir idioma selecionado
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('locale', locale);
+    } catch {}
+  }, [locale]);
 
   const value = useMemo(() => ({ locale, t, setLocale, toggleLocale }), [locale, t, toggleLocale]);
 
