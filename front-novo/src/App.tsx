@@ -4,6 +4,7 @@ import EmpresaDashboard from './components/EmpresaDashboard';
 import InvestidorDashboard from './components/InvestidorDashboard';
 import { useI18n } from './i18n/index';
 import { useWallet } from './wallet/WalletProvider';
+import { useSorobanReact } from '@soroban-react/core';
 
 type AppState = 'realyield' | 'empresa' | 'investidor';
 
@@ -11,6 +12,7 @@ function App() {
   const [currentState, setCurrentState] = useState<AppState>('realyield');
   const { t, toggleLocale } = useI18n();
   const { connect, isConnecting } = useWallet();
+  const soroban = useSorobanReact();
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // const connectWalletAndNavigate = async (targetState: 'empresa' | 'investidor') => {
@@ -36,8 +38,13 @@ function App() {
   const handleSelectEmpresa = async () => {
     setConnectionError(null);
     try {
-      await connect();
+      // Garante gesto do usuário para abrir popup
+      if (!soroban.address) {
+        await soroban.connect();
+      }
       setCurrentState('empresa');
+      // Sincroniza provider local sem bloquear navegação
+      connect().catch(() => {});
     } catch (error) {
       setConnectionError('Falha ao conectar carteira. Verifique a extensão Freighter.');
     }
@@ -46,8 +53,13 @@ function App() {
   const handleSelectInvestidor = async () => {
     setConnectionError(null);
     try {
-      await connect();
+      // Garante gesto do usuário para abrir popup
+      if (!soroban.address) {
+        await soroban.connect();
+      }
       setCurrentState('investidor');
+      // Sincroniza provider local sem bloquear navegação
+      connect().catch(() => {});
     } catch (error) {
       setConnectionError('Falha ao conectar carteira. Verifique a extensão Freighter.');
     }

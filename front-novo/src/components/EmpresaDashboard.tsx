@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useWallet } from '../wallet/WalletProvider';
 import { useI18n } from '../i18n/index';
+import { useContractWrite } from '@/blockchain/hooks/useContractWrite';
+import { useSorobanReact } from '@soroban-react/core';
+import { useContractRead } from '@/blockchain/hooks/useContractRead';
 
 interface RWAFormData {
   assetName: string;
@@ -16,6 +19,7 @@ interface RWAFormData {
   prazo: string;
   constructorName: string;
   tokenSymbol: string;
+  ipfs: string;
 }
 
 interface Contract {
@@ -39,7 +43,7 @@ interface Contract {
 type DashboardTab = 'emissao' | 'contratos' | 'metricas';
 
 function EmpresaDashboard() {
-  const { address } = useWallet();
+  const { address, network, isInstalled, isConnecting, connect, disconnect } = useWallet();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emissao');
   const [rwaForm, setRwaForm] = useState<RWAFormData>({
@@ -55,10 +59,28 @@ function EmpresaDashboard() {
     interestRate: '',
     prazo: '12',
     constructorName: '',
-    tokenSymbol: ''
+    tokenSymbol: '',
+    ipfs: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const { registerProperty, isWriteLoading, transferProperty } = useContractWrite();
+  const soroban = useSorobanReact();
+  const { getProperty, simulateBalance, isReadLoading } = useContractRead();
+
+  // Consulta de propriedade / simulação
+  const [queryId, setQueryId] = useState<string>('');
+  const [queried, setQueried] = useState<any | null>(null);
+  const [simInvestment, setSimInvestment] = useState<string>('');
+  const [simResult, setSimResult] = useState<string>('');
+
+  // Transferência
+  const [transferTo, setTransferTo] = useState<string>('');
+  const [transferAmount, setTransferAmount] = useState<string>('');
+  const [transferPropId, setTransferPropId] = useState<string>('');
+  const [txMessage, setTxMessage] = useState<string>('');
+  const [lastRegisterHash, setLastRegisterHash] = useState<string>('');
+  const [lastTransferHash, setLastTransferHash] = useState<string>('');
 
   // Dados simulados de contratos
   const [contracts] = useState<Contract[]>([
@@ -123,7 +145,8 @@ function EmpresaDashboard() {
     if (!rwaForm.definition.trim()) errors.push(t('validation.definitionRequired'));
     if (!rwaForm.totalSupply.trim()) errors.push(t('validation.totalSupplyRequired'));
     if (!rwaForm.location.trim()) errors.push(t('validation.locationRequired'));
-    if (!rwaForm.expectedCompletion.trim()) errors.push(t('validation.dueDateRequired'));
+    // Removido: data de vencimento obrigatória para não bloquear testes
+    // if (!rwaForm.expectedCompletion.trim()) errors.push(t('validation.dueDateRequired'));
     if (!rwaForm.expectedAmount.trim()) errors.push(t('validation.expectedAmountRequired'));
     if (!rwaForm.interestRate.trim()) errors.push(t('validation.interestRateRequired'));
     if (!rwaForm.prazo.trim()) errors.push(t('validation.termRequired'));
@@ -157,27 +180,39 @@ function EmpresaDashboard() {
       setSubmitMessage({type: 'error', text: errors.join(', ')});
       return;
     }
+    if (!address && !soroban.address) {
+      try {
+        await soroban.connect();
+      } catch (e) {}
+      if (!address && !soroban.address) {
+        setSubmitMessage({ type: 'error', text: 'Conecte sua carteira Freighter antes de continuar.' });
+        return;
+      }
+    }
     
     setIsSubmitting(true);
     
     try {
-      // Simular chamada para API
-      const formData = {
-        ...rwaForm,
-        totalSupply: Number(rwaForm.totalSupply),
-        expectedAmount: Number(rwaForm.expectedAmount),
-        interestRate: Number(rwaForm.interestRate),
-        prazo: Number(rwaForm.prazo),
-        companyWallet: address || 'DEMO_WALLET',
-        timestamp: new Date().toISOString()
-      };
-      
-      console.log('Enviando dados para API:', formData);
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setSubmitMessage({type: 'success', text: t('messages.success')});
+      const totalSupply = BigInt(rwaForm.totalSupply);
+      const eleQuer = BigInt(Math.floor(parseFloat(rwaForm.expectedAmount) || 0));
+      const eleTem = BigInt(0);
+
+      const { txHash, newId } = await registerProperty({
+        builder: address || soroban.address!,
+        property_name: rwaForm.assetName,
+        ele_quer: eleQuer,
+        ele_tem: eleTem,
+        total_supply: totalSupply,
+        nome_construtora: rwaForm.constructorName,
+        ipfs: rwaForm.ipfs || rwaForm.propertyURI,
+        sigla: rwaForm.tokenSymbol,
+      });
+
+      setSubmitMessage({
+        type: 'success',
+        text: `Propriedade registrada com sucesso! ID: ${newId.toString()} | TX: ${txHash}`
+      });
+      setLastRegisterHash(txHash);
 
       // Limpar formulário
       setRwaForm({
@@ -193,11 +228,17 @@ function EmpresaDashboard() {
         interestRate: '',
         prazo: '12',
         constructorName: '',
-        tokenSymbol: ''
+        tokenSymbol: '',
+        ipfs: ''
       });
       
-    } catch (error) {
-      setSubmitMessage({type: 'error', text: t('messages.error')});
+    } catch (error: any) {
+      console.error(error);
+      if (error.message && error.message.includes('#1001')) {
+        setSubmitMessage({type: 'error', text: 'Erro de autorização. O contrato já foi inicializado por outro usuário.'});
+      } else {
+        setSubmitMessage({type: 'error', text: t('messages.error')});
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -205,6 +246,41 @@ function EmpresaDashboard() {
 
   const handleBackToRealYield = () => {
     window.location.reload();
+  };
+
+  const handleQueryProperty = async () => {
+    setQueried(null);
+    setSimResult('');
+    if (!queryId) return;
+    const prop = await getProperty(queryId);
+    setQueried(prop);
+  };
+
+  const handleSimulate = async () => {
+    if (!queried || !simInvestment) return;
+    const res = await simulateBalance(simInvestment, queried);
+    setSimResult(res.toString());
+  };
+
+  const handleTransfer = async () => {
+    setTxMessage('');
+    if (!address) {
+      setTxMessage('Conecte sua carteira Freighter.');
+      return;
+    }
+    if (!transferTo || !transferAmount || !transferPropId) return;
+    try {
+      const hash = await transferProperty({
+        from: address,
+        to: transferTo,
+        property_id: BigInt(transferPropId),
+        amount: BigInt(transferAmount),
+      });
+      setTxMessage(`Transferência enviada! TX: ${hash}`);
+      setLastTransferHash(hash);
+    } catch (e) {
+      setTxMessage('Falha ao transferir. Verifique os dados e tente novamente.');
+    }
   };
 
   const activeContracts = contracts.filter(c => c.status === 'active');
@@ -286,7 +362,44 @@ function EmpresaDashboard() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '14px',
+            color: 'white',
+            fontSize: '12px'
+          }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: network ? '#22c55e' : '#f59e0b' }} />
+            <span>{network || 'Rede?'}</span>
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '14px',
+            color: 'white',
+            fontSize: '12px',
+            fontFamily: 'monospace'
+          }}>
+            {address ? (
+              <>
+                <span>{address.slice(0, 6)}...{address.slice(-4)}</span>
+                <button onClick={disconnect} style={{ background: 'transparent', border: 'none', color: '#fca5a5', cursor: 'pointer' }}>Sair</button>
+              </>
+            ) : (
+              <button onClick={connect} disabled={!isInstalled || isConnecting} style={{ background: 'transparent', border: 'none', color: 'white', cursor: isInstalled ? 'pointer' : 'not-allowed' }}>
+                {isInstalled ? (isConnecting ? 'Conectando...' : 'Conectar Freighter') : 'Instale a Freighter'}
+              </button>
+            )}
+          </div>
           <button
             onClick={toggleLocale}
             style={{
@@ -445,6 +558,13 @@ function EmpresaDashboard() {
                   '0 8px 24px rgba(16, 185, 129, 0.3)' : '0 8px 24px rgba(239, 68, 68, 0.3)'
               }}>
                 {submitMessage?.type === 'success' ? '✅' : '❌'} {submitMessage?.text}
+                {submitMessage?.type === 'success' && lastRegisterHash && (
+                  <div style={{ marginTop: '8px' }}>
+                    <a href={`https://stellar.expert/explorer/testnet/tx/${lastRegisterHash}`} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'underline' }}>
+                      Ver no Explorer →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
@@ -734,34 +854,86 @@ function EmpresaDashboard() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isWriteLoading}
                 style={{
                   width: '100%',
                   padding: '15px',
-                  backgroundColor: isSubmitting ? '#9ca3af' : '#8b5cf6',
+                  backgroundColor: (isSubmitting || isWriteLoading) ? '#9ca3af' : '#8b5cf6',
                   color: 'white',
                   border: 'none',
                   borderRadius: '10px',
                   fontSize: '18px',
                   fontWeight: 'bold',
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  cursor: (isSubmitting || isWriteLoading) ? 'not-allowed' : 'pointer',
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                   transition: 'all 0.3s ease'
                 }}
                 onMouseOver={(e) => {
-                  if (!isSubmitting) {
+                  if (!(isSubmitting || isWriteLoading)) {
                     (e.target as HTMLButtonElement).style.backgroundColor = '#7c3aed';
                   }
                 }}
                 onMouseOut={(e) => {
-                  if (!isSubmitting) {
+                  if (!(isSubmitting || isWriteLoading)) {
                     (e.target as HTMLButtonElement).style.backgroundColor = '#8b5cf6';
                   }
                 }}
               >
-                {isSubmitting ? '⏳' : t('company.form.submit')}
+                {(isSubmitting || isWriteLoading) ? '⏳' : t('company.form.submit')}
               </button>
             </form>
+
+            {/* Consulta e simulação */}
+            <div style={{ marginTop: '30px', background: 'white', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ margin: 0, marginBottom: '12px' }}>Consultar Propriedade & Simular Balance</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', marginBottom: '12px' }}>
+                <input type="text" placeholder="Property ID (u128)" value={queryId} onChange={(e) => setQueryId(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <button onClick={handleQueryProperty} disabled={isReadLoading} style={{ padding: '10px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Buscar</button>
+              </div>
+              {queried && (
+                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                  <div><strong>ID:</strong> {(queried.id as bigint).toString?.() ?? String(queried.id)}</div>
+                  <div><strong>Nome:</strong> {queried.name}</div>
+                  <div><strong>Builder:</strong> {queried.builder}</div>
+                  <div><strong>Total supply:</strong> {(queried.total_supply as bigint).toString?.() ?? String(queried.total_supply)}</div>
+                  <div><strong>Ele quer:</strong> {(queried.ele_quer as bigint).toString?.() ?? String(queried.ele_quer)}</div>
+                  <div><strong>Ele tem:</strong> {(queried.ele_tem as bigint).toString?.() ?? String(queried.ele_tem)}</div>
+                </div>
+              )}
+              {queried && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                  <input type="number" placeholder="Investment (i128)" value={simInvestment} onChange={(e) => setSimInvestment(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                  <button onClick={handleSimulate} disabled={isReadLoading} style={{ padding: '10px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Simular</button>
+                </div>
+              )}
+              {simResult && (
+                <div style={{ marginTop: '10px', color: '#065f46' }}>Balance simulado: {simResult}</div>
+              )}
+            </div>
+
+            {/* Transferência */}
+            <div style={{ marginTop: '30px', background: 'white', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ margin: 0, marginBottom: '12px' }}>Transferir Propriedade</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                <input type="text" placeholder="Para (G...)" value={transferTo} onChange={(e) => setTransferTo(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <input type="text" placeholder="Property ID (u128)" value={transferPropId} onChange={(e) => setTransferPropId(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <input type="text" placeholder="Quantidade (i128)" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                <button onClick={handleTransfer} disabled={isWriteLoading} style={{ padding: '10px 16px', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Transferir</button>
+                {txMessage && (
+                  <div style={{ color: txMessage.startsWith('Transferência enviada') ? '#065f46' : '#b91c1c' }}>
+                    {txMessage}
+                    {lastTransferHash && (
+                      <div style={{ marginTop: '8px' }}>
+                        <a href={`https://stellar.expert/explorer/testnet/tx/${lastTransferHash}`} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'underline' }}>
+                          Ver no Explorer →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
           </div>
         )}
 
@@ -904,7 +1076,6 @@ function EmpresaDashboard() {
                       {t('status.completed')}
                     </span>
                   </div>
-
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '15px' }}>
                     <div>

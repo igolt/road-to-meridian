@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useWallet } from '../wallet/WalletProvider';
 import { useI18n } from '../i18n/index';
+import { useSorobanReact } from '@soroban-react/core';
+import { useContractRead } from '@/blockchain/hooks/useContractRead';
 
 interface EmprestimoFuturo {
   id: string;
@@ -51,7 +53,8 @@ interface ContratoFinalizado {
 type DashboardTab = 'emprestimos' | 'historico';
 
 function InvestidorDashboard() {
-  const { address } = useWallet();
+  const { address, network, isInstalled, isConnecting, connect, disconnect } = useWallet();
+  const soroban = useSorobanReact();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emprestimos');
   const [selectedEmprestimo, setSelectedEmprestimo] = useState<EmprestimoFuturo | null>(null);
@@ -60,6 +63,11 @@ function InvestidorDashboard() {
   const [filtroAPY, setFiltroAPY] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const { getProperty, simulateBalance, isReadLoading } = useContractRead();
+  const [queryId, setQueryId] = useState('');
+  const [queried, setQueried] = useState<any | null>(null);
+  const [simInvestment, setSimInvestment] = useState('');
+  const [simResult, setSimResult] = useState('');
 
   // Dados simulados de empréstimos futuros
   const [emprestimosFuturos] = useState<EmprestimoFuturo[]>([
@@ -186,7 +194,6 @@ function InvestidorDashboard() {
     setIsSubmitting(true);
     
     try {
-      // Simular chamada para API
       const investmentData = {
         emprestimoId: selectedEmprestimo.id,
         valorInvestimento: parseFloat(valorInvestimento),
@@ -198,12 +205,10 @@ function InvestidorDashboard() {
       
       console.log('Enviando investimento para API:', investmentData);
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       setSubmitMessage({type: 'success', text: 'Contrato assinado com sucesso! Investimento realizado.'});
       
-      // Limpar formulário
       setSelectedEmprestimo(null);
       setValorInvestimento('');
       
@@ -212,6 +217,20 @@ function InvestidorDashboard() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleQueryProperty = async () => {
+    setQueried(null);
+    setSimResult('');
+    if (!queryId) return;
+    const prop = await getProperty(queryId);
+    setQueried(prop);
+  };
+
+  const handleSimulate = async () => {
+    if (!queried || !simInvestment) return;
+    const res = await simulateBalance(simInvestment, queried);
+    setSimResult(res.toString());
   };
 
   const emprestimosFiltrados = emprestimosFuturos.filter(emprestimo => {
@@ -377,7 +396,7 @@ function InvestidorDashboard() {
           </div>
         </div>
 
-        {/* Coluna Direita: Assinatura do Contrato */}
+        {/* Coluna Direita: Assinatura do Contrato + Consulta Blockchain */}
         <div>
           {selectedEmprestimo ? (
             <div>
@@ -510,6 +529,35 @@ function InvestidorDashboard() {
                 </button>
                 </div>
               </form>
+
+              {/* Consulta Blockchain */}
+              <div style={{ marginTop: '20px', background: 'white', padding: '16px', borderRadius: '12px' }}>
+                <h3 style={{ margin: 0, marginBottom: '12px' }}>Consultar Propriedade & Simular Balance</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', marginBottom: '12px' }}>
+                  <input type="text" placeholder="Property ID (u128)" value={queryId} onChange={(e) => setQueryId(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                  <button onClick={handleQueryProperty} disabled={isReadLoading} style={{ padding: '10px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Buscar</button>
+                </div>
+                {queried && (
+                  <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                    <div><strong>ID:</strong> {(queried.id as bigint).toString?.() ?? String(queried.id)}</div>
+                    <div><strong>Nome:</strong> {queried.name}</div>
+                    <div><strong>Builder:</strong> {queried.builder}</div>
+                    <div><strong>Total supply:</strong> {(queried.total_supply as bigint).toString?.() ?? String(queried.total_supply)}</div>
+                    <div><strong>Ele quer:</strong> {(queried.ele_quer as bigint).toString?.() ?? String(queried.ele_quer)}</div>
+                    <div><strong>Ele tem:</strong> {(queried.ele_tem as bigint).toString?.() ?? String(queried.ele_tem)}</div>
+                  </div>
+                )}
+                {queried && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+                    <input type="number" placeholder="Investment (i128)" value={simInvestment} onChange={(e) => setSimInvestment(e.target.value)} style={{ padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+                    <button onClick={handleSimulate} disabled={isReadLoading} style={{ padding: '10px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Simular</button>
+                  </div>
+                )}
+                {simResult && (
+                  <div style={{ marginTop: '10px', color: '#065f46' }}>Balance simulado: {simResult}</div>
+                )}
+              </div>
+
             </div>
           ) : (
             <div style={{
@@ -801,6 +849,43 @@ function InvestidorDashboard() {
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '14px',
+            color: 'white',
+            fontSize: '12px'
+          }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: network ? '#22c55e' : '#f59e0b' }} />
+            <span>{network || 'Rede?'}</span>
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '14px',
+            color: 'white',
+            fontSize: '12px',
+            fontFamily: 'monospace'
+          }}>
+            {address ? (
+              <>
+                <span>{address.slice(0, 6)}...{address.slice(-4)}</span>
+                <button onClick={disconnect} style={{ background: 'transparent', border: 'none', color: '#fca5a5', cursor: 'pointer' }}>Sair</button>
+              </>
+            ) : (
+              <button onClick={connect} disabled={!isInstalled || isConnecting} style={{ background: 'transparent', border: 'none', color: 'white', cursor: isInstalled ? 'pointer' : 'not-allowed' }}>
+                {isInstalled ? (isConnecting ? 'Conectando...' : 'Conectar Freighter') : 'Instale a Freighter'}
+              </button>
+            )}
+          </div>
           <button
             onClick={toggleLocale}
             style={{
@@ -892,7 +977,7 @@ function InvestidorDashboard() {
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: activeTab === tab.id ? '600' : '500',
-                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                transition: 'all 0.3s ease',
                 boxShadow: activeTab === tab.id ? '0 8px 24px rgba(59, 130, 246, 0.4)' : 'none',
                 transform: activeTab === tab.id ? 'scale(1.05)' : 'scale(1)'
               }}

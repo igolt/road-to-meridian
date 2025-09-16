@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bindings": "stellar contract bindings typescript --rpc-url https://soroban-testnet.stellar.org --network-passphrase \"Test SDF Network ; September 2015\" --contract-id CAZ6XYLIPSTTBLN4SPKZJBOBN6GG52XXASQHQ5UXYEVG2EZ7O3X7HNOS --output-dir src/blockchain/lib"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -21,8 +22,13 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.544.0",
+    "buffer": "6.0.3",
+    "crypto-browserify": "^3.12.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "@stellar/stellar-sdk": "^13.0.0",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
     "stellar-sdk": "^13.3.0",
     "tailwind-merge": "^3.3.1"
   },
