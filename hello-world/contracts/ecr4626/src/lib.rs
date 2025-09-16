@@ -58,6 +58,42 @@ impl LoanContract {
         e.storage().instance().set(&"next_borrow_id", &1u128);
         e.storage().instance().set(&"next_loan_id", &1u128);
     }
+
+    fn get_borrow_storage(env: &Env) -> Map<u128, 
+            (Address, //Endereço da construtora
+            String, //Nome da cosntrutora
+            String, //Nome do Imovel
+            String, //Data Limite
+            u32, //APY
+            i128, //Preco por token
+            u128)> {
+        let borrows: Map<u128, 
+            (Address, //Endereço da construtora
+            String, //Nome da cosntrutora
+            String, //Nome do Imovel
+            String, //Data Limite
+            u32, //APY
+            i128, //Preco por token
+            u128)>= //Percentual restante
+            e.storage().instance().get(&"borrows").unwrap_or(Map::new(&e));
+            borrows
+    }
+
+    fn get_loan_storage(env: &Env) -> Map<u128, //ID do loan
+        (u128, //ID do borrow
+        Address, //Endereço construtora
+        Address, //Endereço client
+        u128)> {
+        let loans: Map<u128, //ID do loan
+            (u128, //ID do borrow
+            Address, //Endereço construtora
+            Address, //Endereço client
+            u128)> = //Dinheiro
+            e.storage().instance().get(&"loans").unwrap_or(Map::new(&e));
+        loans
+        } 
+
+
     fn adicionar_dias(dias: i64) -> String {
         let hoje = Local::now();
         let nova_data = hoje + Duration::days(dias);
