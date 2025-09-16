@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { WalletMenu } from './WalletMenu';
 
 interface RWAFormData {
   assetName: string;
@@ -114,7 +115,8 @@ function EmpresaDashboard() {
     });
   };
 
-  const handleBackToRealYield = () => {
+
+  const handleDisconnect = () => {
     window.location.reload();
   };
 
@@ -140,20 +142,9 @@ function EmpresaDashboard() {
           <h1 style={{ color: '#333', margin: 0, fontSize: '2rem' }}>
             🏢 Dashboard Empresa - RealYield
           </h1>
-          <button 
-            onClick={handleBackToRealYield}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            ← Voltar para RealYield
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <WalletMenu onDisconnect={handleDisconnect} />
+          </div>
         </div>
       </div>
 

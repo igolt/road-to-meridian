@@ -36,3 +36,26 @@ body {
   transform: translateY(-3px);
   box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
 }
+
+/* Animações para Toast */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}

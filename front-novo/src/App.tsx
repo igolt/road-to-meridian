@@ -1,23 +1,97 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { StellarPasskeyService, type StellarUser } from './services/StellarPasskeyService';
 import EmpresaDashboard from './components/EmpresaDashboard';
 import InvestidorDashboard from './components/InvestidorDashboard';
+import { TouchIDStatus } from './components/TouchIDStatus';
 
 type AppState = 'realyield' | 'empresa' | 'investidor';
 
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('realyield');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [currentUser, setCurrentUser] = useState<StellarUser | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSupported, setIsSupported] = useState(false);
+  const [showTouchID, setShowTouchID] = useState(false);
 
-  const handleSelectEmpresa = () => {
-    setCurrentState('empresa');
+  const passkeyService = StellarPasskeyService.getInstance();
+
+  useEffect(() => {
+    // Verificar suporte ao Passkey e carregar usuário salvo
+    setIsSupported(passkeyService.isSupported());
+    const storedUser = passkeyService.loadStoredUser();
+    if (storedUser) {
+      setCurrentUser(storedUser);
+      setCurrentState(storedUser.segment);
+    }
+  }, []);
+
+  const handleSelectEmpresa = async () => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+    setShowTouchID(true);
+    
+    try {
+      console.log('🏢 Iniciando autenticação para Empresa...');
+      
+      // Tentar conectar com carteira existente primeiro
+      let user = await passkeyService.connectWallet('empresa');
+      
+      // Se não conseguir conectar, criar nova carteira
+      if (!user) {
+        console.log('📝 Criando nova carteira...');
+        user = await passkeyService.createWallet('empresa');
+      }
+      
+      if (user) {
+        console.log('✅ Autenticação bem-sucedida!', user);
+        setCurrentUser(user);
+        setCurrentState('empresa');
+      } else {
+        setAuthError('Falha na autenticação com Passkey');
+      }
+    } catch (error) {
+      console.error('❌ Erro na autenticação:', error);
+      setAuthError('Erro na autenticação: ' + (error as Error).message);
+    } finally {
+      setIsAuthenticating(false);
+      setShowTouchID(false);
+    }
   };
 
-  const handleSelectInvestidor = () => {
-    setCurrentState('investidor');
+  const handleSelectInvestidor = async () => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+    setShowTouchID(true);
+    
+    try {
+      console.log('💰 Iniciando autenticação para Investidor...');
+      
+      // Tentar conectar com carteira existente primeiro
+      let user = await passkeyService.connectWallet('investidor');
+      
+      // Se não conseguir conectar, criar nova carteira
+      if (!user) {
+        console.log('📝 Criando nova carteira...');
+        user = await passkeyService.createWallet('investidor');
+      }
+      
+      if (user) {
+        console.log('✅ Autenticação bem-sucedida!', user);
+        setCurrentUser(user);
+        setCurrentState('investidor');
+      } else {
+        setAuthError('Falha na autenticação com Passkey');
+      }
+    } catch (error) {
+      console.error('❌ Erro na autenticação:', error);
+      setAuthError('Erro na autenticação: ' + (error as Error).message);
+    } finally {
+      setIsAuthenticating(false);
+      setShowTouchID(false);
+    }
   };
 
-  const handleBackToRealYield = () => {
-    setCurrentState('realyield');
-  };
 
   if (currentState === 'empresa') {
     return <EmpresaDashboard />;
@@ -25,6 +99,52 @@ function App() {
 
   if (currentState === 'investidor') {
     return <InvestidorDashboard />;
+  }
+
+  if (isAuthenticating) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        flexDirection: 'column',
+        padding: '20px',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        <div style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          padding: '40px',
+          borderRadius: '20px',
+          textAlign: 'center',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          maxWidth: '500px',
+          width: '100%'
+        }}>
+          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🔐</div>
+          <h2 style={{ color: '#333', marginBottom: '20px', fontSize: '1.8rem' }}>
+            Autenticação com Passkey
+          </h2>
+          <div className="spinner"></div>
+          <p style={{ color: '#666', marginTop: '20px' }}>
+            {isSupported ? 'Aguarde a autenticação com Passkey...' : 'Navegador não suporta Passkey'}
+          </p>
+          {authError && (
+            <div style={{ 
+              backgroundColor: '#fee', 
+              color: '#c33', 
+              padding: '10px', 
+              borderRadius: '5px', 
+              marginTop: '15px',
+              fontSize: '14px'
+            }}>
+              {authError}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
   // Tela principal RealYield
@@ -83,8 +203,8 @@ function App() {
             minWidth: '200px',
             transition: 'transform 0.2s'
           }}
-          onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-          onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          onMouseOver={(e) => (e.target as HTMLElement).style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => (e.target as HTMLElement).style.transform = 'translateY(0)'}
         >
           <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🏢</div>
           <div>Empresa</div>
@@ -109,8 +229,8 @@ function App() {
             minWidth: '200px',
             transition: 'transform 0.2s'
           }}
-          onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-          onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          onMouseOver={(e) => (e.target as HTMLElement).style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => (e.target as HTMLElement).style.transform = 'translateY(0)'}
         >
           <div style={{ fontSize: '2rem', marginBottom: '10px' }}>💰</div>
           <div>Investidor</div>
@@ -127,8 +247,11 @@ function App() {
         marginTop: '40px',
         textAlign: 'center'
       }}>
-        Powered by Stellar Network
+        Powered by Stellar Network • Autenticação com Touch ID
       </div>
+      
+      {/* Touch ID Status Modal */}
+      <TouchIDStatus isVisible={showTouchID} />
     </div>
   );
 }
