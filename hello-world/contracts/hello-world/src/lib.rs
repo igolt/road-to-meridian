@@ -80,14 +80,6 @@ impl RealEstateTokenContract {
         properties.set(next_id, property);
         env.storage().instance().set(&"properties", &properties);
 
-        let mut property_info: Map<u128, (String, i128, Address)> = env
-            .storage()
-            .instance()
-            .get(&"property_info")
-            .unwrap_or(Map::new(&env));
-        property_info.set(next_id, (property_name.clone(), total_supply, builder.clone()));
-        env.storage().instance().set(&"property_info", &property_info);
-
         let mut balances: Map<(Address, u128), i128> = env
             .storage()
             .instance()
@@ -108,27 +100,12 @@ impl RealEstateTokenContract {
         next_id
     }
 
-    pub fn get_property(env: Env, property_id: u128) -> (String, i128, Address, Property) {
-        let property_info: Map<u128, (String, i128, Address)> = env
-            .storage()
-            .instance()
-            .get(&"property_info")
-            .unwrap_or(Map::new(&env));
-
-        let properties: Map<u128, Property> = env
-            .storage()
-            .instance()
-            .get(&"properties")
-            .unwrap_or(Map::new(&env));
-
-        let (name, supply, builder) = property_info
+    pub fn get_property(env: Env, property_id: u128) -> (String, i128, Address) {
+        let properties = Self::get_properties_storage(&env);
+        let property = properties
             .get(property_id)
             .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
-        let metadata = properties
-            .get(property_id)
-            .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
-
-        (name, supply, builder, metadata)
+        (property.name, property.total_supply, property.builder)
     }
 
     pub fn transfer_property(
@@ -139,16 +116,16 @@ impl RealEstateTokenContract {
         amount: i128,
     ) {
         from.require_auth();
+        
+        if amount <= 0 {
+            panic_with_error!(&env, Error::InsufficientBalance);
+        }
 
-        let protocol_fee_bps: u32 = env.storage().instance().get(&"protocol_fee_bps").unwrap_or(0);
-        let fee_wallet: Address = env
-            .storage()
-            .instance()
-            .get(&"fee_wallet")
-            .unwrap_or_else(|| panic_with_error!(&env, Error::InvalidProperty));
-
-        let fee_amount = (amount * protocol_fee_bps as i128) / 10000;
-        let net_amount = amount - fee_amount;
+        // Verificar se a propriedade existe
+        let properties = Self::get_properties_storage(&env);
+        if !properties.contains_key(property_id) {
+            panic_with_error!(&env, Error::InvalidProperty);
+        }
 
         let mut balances: Map<(Address, u128), i128> = env
             .storage()
@@ -156,25 +133,31 @@ impl RealEstateTokenContract {
             .get(&"balances")
             .unwrap_or(Map::new(&env));
 
+        // Obter saldo atual do remetente
         let from_balance = balances.get((from.clone(), property_id)).unwrap_or(0);
         if from_balance < amount {
             panic_with_error!(&env, Error::InsufficientBalance);
         }
-        balances.set((from.clone(), property_id), from_balance - amount);
 
-        if fee_amount > 0 {
-            let fee_balance = balances.get((fee_wallet.clone(), property_id)).unwrap_or(0);
-            balances.set((fee_wallet.clone(), property_id), fee_balance + fee_amount);
+        // Atualizar saldo do remetente
+        let new_from_balance = from_balance - amount;
+        if new_from_balance > 0 {
+            balances.set((from.clone(), property_id), new_from_balance);
+        } else {
+            balances.remove((from.clone(), property_id));
         }
 
+        // Atualizar saldo do destinatário
         let to_balance = balances.get((to.clone(), property_id)).unwrap_or(0);
-        balances.set((to.clone(), property_id), to_balance + net_amount);
+        balances.set((to.clone(), property_id), to_balance + amount);
 
+        // Salvar balanços atualizados
         env.storage().instance().set(&"balances", &balances);
 
+        // Emitir evento de transferência
         env.events().publish(
-            ("property_transfer", property_id),
-            (from, to, amount, fee_amount),
+            ("property_transferred", property_id),
+            (from, to, amount),
         );
     }
 
