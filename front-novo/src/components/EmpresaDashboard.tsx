@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSorobanReact } from '@soroban-react/core';
 
 interface RWAFormData {
   assetName: string;
@@ -32,6 +33,7 @@ interface Contract {
 type DashboardTab = 'emissao' | 'contratos' | 'emprestimos' | 'metricas';
 
 function EmpresaDashboard() {
+  const sorobanContext = useSorobanReact();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emissao');
   const [rwaForm, setRwaForm] = useState<RWAFormData>({
     assetName: '',
@@ -137,9 +139,16 @@ function EmpresaDashboard() {
         marginBottom: '20px'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ color: '#333', margin: 0, fontSize: '2rem' }}>
-            🏢 Dashboard Empresa - RealYield
-          </h1>
+          <div>
+            <h1 style={{ color: '#333', margin: 0, fontSize: '2rem' }}>
+              🏢 Dashboard Empresa - RealYield
+            </h1>
+            {sorobanContext.address && (
+              <p style={{ color: '#666', margin: '5px 0 0 0', fontSize: '14px' }}>
+                🔗 Carteira: {sorobanContext.address.slice(0, 8)}...{sorobanContext.address.slice(-8)}
+              </p>
+            )}
+          </div>
           <button 
             onClick={handleBackToRealYield}
             style={{

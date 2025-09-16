@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSorobanReact } from '@soroban-react/core';
 
 interface EmprestimoFuturo {
   id: string;
@@ -46,6 +47,7 @@ interface ContratoFinalizado {
 type DashboardTab = 'emprestimos' | 'contrato' | 'historico';
 
 function InvestidorDashboard() {
+  const sorobanContext = useSorobanReact();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emprestimos');
   const [selectedEmprestimo, setSelectedEmprestimo] = useState<EmprestimoFuturo | null>(null);
   const [valorInvestimento, setValorInvestimento] = useState('');
@@ -637,9 +639,16 @@ function InvestidorDashboard() {
         marginBottom: '20px'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ color: '#333', margin: 0, fontSize: '2rem' }}>
-            💰 Dashboard Investidor - RealYield
-          </h1>
+          <div>
+            <h1 style={{ color: '#333', margin: 0, fontSize: '2rem' }}>
+              💰 Dashboard Investidor - RealYield
+            </h1>
+            {sorobanContext.address && (
+              <p style={{ color: '#666', margin: '5px 0 0 0', fontSize: '14px' }}>
+                🔗 Carteira: {sorobanContext.address.slice(0, 8)}...{sorobanContext.address.slice(-8)}
+              </p>
+            )}
+          </div>
           <button 
             onClick={handleBackToRealYield}
             style={{

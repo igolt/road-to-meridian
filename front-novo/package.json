@@ -14,11 +14,16 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@simplewebauthn/browser": "^13.2.0",
     "@simplewebauthn/server": "^13.2.0",
+    "@soroban-react/chains": "^9.1.13",
+    "@soroban-react/core": "^9.3.0",
+    "@soroban-react/freighter": "^9.1.13",
+    "@stellar/freighter-api": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "stellar-sdk": "^13.3.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
