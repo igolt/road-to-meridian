@@ -31,7 +31,6 @@ export const useContractWrite = (): UseContractWrite => {
 
   const toI128 = (v: bigint | number | string): bigint => BigInt(v);
   const toU128 = (v: bigint | number | string): bigint => BigInt(v);
-  const toString = (v: string): string => v;
 
   const initialize = async (admin: string): Promise<string> => {
     setIsWriteLoading(true);
@@ -82,7 +81,7 @@ export const useContractWrite = (): UseContractWrite => {
           try {
             // Tenta inicializar - se já foi inicializado, isso vai falhar
             const initTx = await contract(builder).initialize({ admin: builder });
-            const initSim = await initTx.simulate();
+            await initTx.simulate();
             const initTxHash = await signAndSend(initTx.toXDR(), signWithFreighter);
             console.log('Contrato inicializado com sucesso:', initTxHash);
           } catch (initError: any) {

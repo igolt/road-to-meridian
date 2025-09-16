@@ -12,10 +12,12 @@ const testnetChain = {
   id: 'testnet',
   name: 'Testnet',
   networkPassphrase: 'Test SDF Network ; September 2015',
+  network: 'testnet',
+  networkUrl: 'https://soroban-testnet.stellar.org',
   rpcUrl: 'https://soroban-testnet.stellar.org',
   iconBackground: '#fff',
   iconUrl: 'https://stellar.org/favicon.ico',
-};
+} as any;
 
 const SorobanProvider: React.FC<SorobanProviderProps> = ({ children }) => {
   return (

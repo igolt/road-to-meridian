@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useWallet } from '../wallet/WalletProvider';
 import { useI18n } from '../i18n/index';
-import { useSorobanReact } from '@soroban-react/core';
 import { useContractRead } from '@/blockchain/hooks/useContractRead';
 
 interface EmprestimoFuturo {
@@ -54,7 +53,6 @@ type DashboardTab = 'emprestimos' | 'historico';
 
 function InvestidorDashboard() {
   const { address, network, isInstalled, isConnecting, connect, disconnect } = useWallet();
-  const soroban = useSorobanReact();
   const { t, toggleLocale } = useI18n();
   const [activeTab, setActiveTab] = useState<DashboardTab>('emprestimos');
   const [selectedEmprestimo, setSelectedEmprestimo] = useState<EmprestimoFuturo | null>(null);
