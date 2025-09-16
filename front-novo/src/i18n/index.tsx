@@ -301,7 +301,13 @@ type I18nContextType = {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocale] = useState<Locale>('pt-BR');
+  const getInitialLocale = (): Locale => {
+    if (typeof window === 'undefined') return 'pt-BR';
+    const saved = localStorage.getItem('locale') as Locale | null;
+    return saved === 'pt-BR' || saved === 'en-US' ? saved : 'pt-BR';
+  };
+
+  const [locale, setLocale] = useState<Locale>(getInitialLocale);
 
   const dict = useMemo(() => (locale === 'pt-BR' ? ptBR : enUS), [locale]);
 
@@ -312,6 +318,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const toggleLocale = useCallback(() => {
     setLocale(prev => (prev === 'pt-BR' ? 'en-US' : 'pt-BR'));
   }, []);
+
+  // Persistir idioma selecionado
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('locale', locale);
+    } catch {}
+  }, [locale]);
 
   const value = useMemo(() => ({ locale, t, setLocale, toggleLocale }), [locale, t, toggleLocale]);
 
